@@ -1,5 +1,11 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import { authApi, ingestionApi } from '../lib/api';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  type ReactNode,
+} from "react";
+import { authApi, ingestionApi } from "../lib/api";
 
 interface User {
   id?: string;
@@ -41,7 +47,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsAuthenticated(false);
       }
     } catch (error) {
-      console.error('Error checking authentication:', error);
+      console.error("Error checking authentication:", error);
       setUser(null);
       setIsAuthenticated(false);
     } finally {
@@ -52,12 +58,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const triggerAutoIngestion = async () => {
     try {
       setIsIngesting(true);
-      setIngestionStatus('Starting data ingestion...');
+      setIngestionStatus("Starting data ingestion...");
 
-      console.log('📥 Calling auto-ingest API...');
+      console.log("📥 Calling auto-ingest API...");
       const response = await ingestionApi.autoIngestDrive();
 
-      console.log('✅ Ingestion started:', response.data);
+      console.log("✅ Ingestion started:", response.data);
       setIngestionStatus(`Processing ${response.data.jobCount} files...`);
 
       // Wait a bit then clear status
@@ -66,8 +72,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIngestionStatus(null);
       }, 5000);
     } catch (error) {
-      console.error('❌ Auto-ingestion failed:', error);
-      setIngestionStatus('Ingestion failed - you may need to trigger it manually');
+      console.error("❌ Auto-ingestion failed:", error);
+      setIngestionStatus(
+        "Ingestion failed - you may need to trigger it manually"
+      );
       setIsIngesting(false);
 
       // Clear error message after a delay
@@ -94,19 +102,56 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       const popup = window.open(
         authUrl,
-        'Google OAuth',
+        "Google OAuth",
         `width=${width},height=${height},left=${left},top=${top}`
       );
 
-      // Poll for popup closure
-      const pollTimer = setInterval(() => {
-        if (popup?.closed) {
-          clearInterval(pollTimer);
-          refreshAuth();
+      // Listen for a postMessage from the popup (safer than polling popup.closed
+      // which can be blocked by Cross-Origin-Opener-Policy). The backend callback
+      // will postMessage({type: 'oauth', success: true}) to window.opener.
+      const handleMessage = (e: MessageEvent) => {
+        try {
+          // Only accept messages from our origin
+          if (e.origin !== window.location.origin) return;
+          // narrow the data safely
+          const data = e.data as unknown;
+          if (
+            typeof data === "object" &&
+            data !== null &&
+            "type" in (data as Record<string, unknown>)
+          ) {
+            const typed = data as { type?: string };
+            if (typed.type === "oauth") {
+              window.removeEventListener("message", handleMessage);
+              try {
+                popup?.close();
+              } catch (err) {
+                console.error("Error closing popup after oauth message:", err);
+              }
+              refreshAuth();
+            }
+          }
+        } catch (err) {
+          console.error("Error handling oauth message:", err);
         }
-      }, 500);
+      };
+
+      window.addEventListener("message", handleMessage);
+
+      // Fallback: in case postMessage doesn't arrive, refresh auth after timeout
+      void setTimeout(() => {
+        window.removeEventListener("message", handleMessage);
+        try {
+          popup?.close();
+        } catch (err) {
+          console.error("Error closing popup on fallback:", err);
+        }
+        refreshAuth();
+      }, 30_000); // 30s
+
+      // Clean up when refreshAuth completes (optional). We'll clear fallback when auth state updates via refreshAuth.
     } catch (error) {
-      console.error('Error initiating login:', error);
+      console.error("Error initiating login:", error);
     }
   };
 
@@ -116,7 +161,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
       setIsAuthenticated(false);
     } catch (error) {
-      console.error('Error logging out:', error);
+      console.error("Error logging out:", error);
     }
   };
 
@@ -131,7 +176,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         login,
         logout,
         refreshAuth,
-        triggerIngestion: triggerAutoIngestion
+        triggerIngestion: triggerAutoIngestion,
       }}
     >
       {children}
@@ -142,7 +187,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
