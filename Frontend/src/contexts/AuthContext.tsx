@@ -100,7 +100,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const left = window.screen.width / 2 - width / 2;
       const top = window.screen.height / 2 - height / 2;
 
-      const popup = window.open(
+      window.open(
         authUrl,
         "Google OAuth",
         `width=${width},height=${height},left=${left},top=${top}`
@@ -122,12 +122,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           ) {
             const typed = data as { type?: string };
             if (typed.type === "oauth") {
+              // Stop listening once we receive the OAuth event. The popup
+              // itself will call window.close() after posting the message.
+              // Attempting to close the popup from the opener can trigger
+              // Cross-Origin-Opener-Policy / COOP errors in some browsers,
+              // so we avoid calling popup.close() here.
               window.removeEventListener("message", handleMessage);
-              try {
-                popup?.close();
-              } catch (err) {
-                console.error("Error closing popup after oauth message:", err);
-              }
               refreshAuth();
             }
           }
@@ -139,13 +139,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       window.addEventListener("message", handleMessage);
 
       // Fallback: in case postMessage doesn't arrive, refresh auth after timeout
+      // Fallback: if we didn't get a postMessage within 30s, stop
+      // listening and trigger a refresh. Do not attempt to close the
+      // popup from the opener (see note above).
       void setTimeout(() => {
         window.removeEventListener("message", handleMessage);
-        try {
-          popup?.close();
-        } catch (err) {
-          console.error("Error closing popup on fallback:", err);
-        }
         refreshAuth();
       }, 30_000); // 30s
 
