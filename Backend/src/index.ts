@@ -9,7 +9,10 @@ import driveRoutes from './routes/drive.js';
 import ingestRoutes from './routes/ingest.js';
 import chatRoutes from './routes/chat.js';
 import explorerRoutes from './routes/explorer.js';
+import workflowRoutes from './routes/workflows.js';
+import insightsRoutes from './routes/insights.js';
 import { initializeElasticsearch } from './config/elasticsearch.js';
+import { workflowScheduler } from './services/workflowScheduler.js';
 
 dotenv.config();
 
@@ -62,6 +65,8 @@ app.use('/api/drive', driveRoutes);
 app.use('/api/ingest', ingestRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/explorer', explorerRoutes);
+app.use('/api/workflows', workflowRoutes);
+app.use('/api/insights', insightsRoutes);
 
 // WebSocket connection handling
 io.on('connection', (socket) => {
@@ -88,11 +93,16 @@ async function startServer() {
     console.log('🔧 Initializing Elasticsearch...');
     await initializeElasticsearch();
 
+    // Initialize Workflow Scheduler
+    console.log('🔧 Initializing workflow scheduler...');
+    await workflowScheduler.initialize();
+
     // Start server
     httpServer.listen(PORT, () => {
       console.log(`✅ Server running on port ${PORT}`);
       console.log(`📡 WebSocket server ready`);
       console.log(`🌐 Frontend: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
+      console.log(`⏰ Workflow scheduler: ${workflowScheduler.getScheduledCount()} workflows scheduled`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);

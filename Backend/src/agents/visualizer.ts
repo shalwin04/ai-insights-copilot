@@ -71,7 +71,7 @@ ACTUAL DATA (${dataPointsAvailable} rows):
 ${JSON.stringify(dataForVisualization, null, 2)}
 `;
 
-    const prompt = `You are a data visualization expert. Based on the user's query and dataset, generate a visualization configuration.
+    const prompt = `You are a data visualization expert. Based on the user's query and dataset, generate a SINGLE visualization configuration.
 
 User Query: "${userQuery}"
 
@@ -80,7 +80,7 @@ ${dataContext}
 
 IMPORTANT: You have access to ${dataPointsAvailable} rows of ACTUAL DATA from the dataset. Use this real data to create meaningful visualizations.
 
-Generate a JSON visualization config with this structure:
+Generate ONE JSON visualization config (NOT an array) with this structure:
 
 For BAR, LINE, PIE charts:
 {
@@ -126,7 +126,7 @@ Examples of good aggregations:
 - Customer Segments: use pie chart with Count or sum by segment
 - Discount vs Profit: use scatter plot with discount on x-axis and profit on y-axis
 
-Return ONLY valid JSON, no markdown or explanation.`;
+Return ONLY a single valid JSON object (NOT an array), no markdown or explanation.`;
 
     console.log('🔄 Calling LLM for visualization generation...');
     const response = await llm.invoke(prompt);
@@ -148,7 +148,18 @@ Return ONLY valid JSON, no markdown or explanation.`;
         .replace(/,\s*}/g, '}')  // Remove trailing commas before }
         .replace(/,\s*]/g, ']'); // Remove trailing commas before ]
 
-      visualization = JSON.parse(cleanedContent);
+      const parsed = JSON.parse(cleanedContent);
+
+      // Handle both array and object responses from LLM
+      if (Array.isArray(parsed)) {
+        // Gemini sometimes returns an array of visualizations
+        visualization = parsed[0]; // Take the first one
+        console.log('📊 LLM returned array of visualizations, using first one');
+      } else {
+        // Single visualization object
+        visualization = parsed;
+      }
+
       console.log('✅ Visualizer: Visualization config generated');
       console.log('   Type:', visualization.type);
       console.log('   Title:', visualization.title);

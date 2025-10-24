@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import html2canvas from 'html2canvas';
 import {
   GripVertical, Maximize2, Minimize2, X, Pin, Download,
   Share2, TrendingUp, AlertCircle
@@ -7,6 +8,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   LineChart, Line, BarChart, Bar, PieChart as RechartsPie, Pie, Cell,
   ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
@@ -37,30 +39,38 @@ interface DraggableCardProps {
   card: InsightCard;
   onRemove: (id: string) => void;
   onPin: (id: string) => void;
+  onDownload: (id: string) => void;
 }
 
-function DraggableCard({ card, onRemove, onPin }: DraggableCardProps) {
+function DraggableCard({ card, onRemove, onPin, onDownload }: DraggableCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const renderContent = () => {
     switch (card.type) {
       case 'chart':
         // Use actual data if available, otherwise fall back to mock data
         const chartData = card.content.data || mockRevenueData;
-        const dataKey = card.content.yAxis || 'value';
 
         if (card.content.chartType === 'line') {
           return (
             <ResponsiveContainer width="100%" height={isExpanded ? 400 : 250}>
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey={card.content.xAxis || 'name'} fontSize={12} />
-                <YAxis fontSize={12} />
+                <XAxis
+                  dataKey="name"
+                  fontSize={12}
+                  label={card.content.xAxis ? { value: card.content.xAxis, position: 'insideBottom', offset: -5 } : undefined}
+                />
+                <YAxis
+                  fontSize={12}
+                  label={card.content.yAxis ? { value: card.content.yAxis, angle: -90, position: 'insideLeft' } : undefined}
+                />
                 <Tooltip />
                 <Legend />
                 <Line
                   type="monotone"
-                  dataKey={dataKey}
+                  dataKey="value"
                   stroke={COLORS[0]}
                   strokeWidth={2}
                   dot={{ fill: COLORS[0], r: 4 }}
@@ -73,11 +83,18 @@ function DraggableCard({ card, onRemove, onPin }: DraggableCardProps) {
             <ResponsiveContainer width="100%" height={isExpanded ? 400 : 250}>
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis dataKey={card.content.xAxis || 'name'} fontSize={12} />
-                <YAxis fontSize={12} />
+                <XAxis
+                  dataKey="name"
+                  fontSize={12}
+                  label={card.content.xAxis ? { value: card.content.xAxis, position: 'insideBottom', offset: -5 } : undefined}
+                />
+                <YAxis
+                  fontSize={12}
+                  label={card.content.yAxis ? { value: card.content.yAxis, angle: -90, position: 'insideLeft' } : undefined}
+                />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey={dataKey} fill={COLORS[0]} radius={[8, 8, 0, 0]} />
+                <Bar dataKey="value" fill={COLORS[0]} radius={[8, 8, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           );
@@ -93,7 +110,7 @@ function DraggableCard({ card, onRemove, onPin }: DraggableCardProps) {
                   label={({ name, percent }: any) => `${name}: ${((percent as number) * 100).toFixed(0)}%`}
                   outerRadius={80}
                   fill="#8884d8"
-                  dataKey={dataKey}
+                  dataKey="value"
                 >
                   {chartData.map((_entry: any, index: number) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -107,11 +124,28 @@ function DraggableCard({ card, onRemove, onPin }: DraggableCardProps) {
           return (
             <ResponsiveContainer width="100%" height={isExpanded ? 400 : 250}>
               <ScatterChart>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey={card.content.xAxis || 'name'} fontSize={12} />
-                <YAxis fontSize={12} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis
+                  dataKey="x"
+                  type="number"
+                  name={card.content.xAxis || 'X'}
+                  fontSize={12}
+                  label={card.content.xAxis ? { value: card.content.xAxis, position: 'insideBottom', offset: -5 } : undefined}
+                />
+                <YAxis
+                  dataKey="y"
+                  type="number"
+                  name={card.content.yAxis || 'Y'}
+                  fontSize={12}
+                  label={card.content.yAxis ? { value: card.content.yAxis, angle: -90, position: 'insideLeft' } : undefined}
+                />
                 <Tooltip cursor={{ strokeDasharray: '3 3' }} />
-                <Scatter data={chartData} fill={COLORS[0]} />
+                <Legend />
+                <Scatter
+                  name={card.title}
+                  data={chartData}
+                  fill={COLORS[0]}
+                />
               </ScatterChart>
             </ResponsiveContainer>
           );
@@ -197,7 +231,7 @@ function DraggableCard({ card, onRemove, onPin }: DraggableCardProps) {
       exit={{ opacity: 0, scale: 0.9 }}
       className={isExpanded ? 'col-span-2 row-span-2' : 'col-span-1'}
     >
-      <Card className="h-full hover:shadow-lg transition-shadow cursor-move">
+      <Card ref={cardRef} className="h-full hover:shadow-lg transition-shadow cursor-move">
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-2">
@@ -226,6 +260,8 @@ function DraggableCard({ card, onRemove, onPin }: DraggableCardProps) {
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7"
+                onClick={() => onDownload(card.id)}
+                title="Download as PNG"
               >
                 <Download className="h-3 w-3" />
               </Button>
@@ -259,23 +295,133 @@ function DraggableCard({ card, onRemove, onPin }: DraggableCardProps) {
 export function InsightCanvas() {
   const { pinnedCards, removePinnedCard, togglePinCard } = useCanvas();
   const [cards, setCards] = useState<InsightCard[]>([]);
+  const [workflowInsights, setWorkflowInsights] = useState<any[]>([]);
+  // const cardRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
-  // Merge pinned cards from context with local cards
+  // Load workflow insights from backend
   useEffect(() => {
-    setCards(pinnedCards);
-  }, [pinnedCards]);
+    const loadWorkflowInsights = async () => {
+      try {
+        const { insightsApi } = await import('@/lib/api');
+        const response = await insightsApi.getInsights();
+        setWorkflowInsights(response.data.insights || []);
+      } catch (error) {
+        console.error('Error loading workflow insights:', error);
+      }
+    };
 
-  const handleRemove = (id: string) => {
-    removePinnedCard(id);
+    loadWorkflowInsights();
+  }, []);
+
+  // Merge pinned cards from context with workflow insights
+  useEffect(() => {
+    // Convert workflow insights to InsightCard format
+    const workflowCards: InsightCard[] = workflowInsights.map((insight) => {
+      // Check if it has a visualization
+      if (insight.visualization) {
+        return {
+          id: insight.id,
+          type: 'chart',
+          title: insight.title,
+          content: {
+            chartType: insight.visualization.type,
+            data: insight.visualization.data,
+            description: insight.content || insight.visualization.description,
+            xAxis: insight.visualization.xAxis,
+            yAxis: insight.visualization.yAxis,
+          },
+          position: { x: 0, y: 0 },
+          size: { width: 400, height: 300 },
+          createdAt: new Date(insight.createdAt),
+          pinned: true,
+          metadata: {
+            source: 'workflow',
+            workflowId: insight.workflowId,
+            workflowName: insight.workflowName,
+          },
+        };
+      } else {
+        // Text-only insight
+        return {
+          id: insight.id,
+          type: 'text',
+          title: insight.title,
+          content: insight.content || '',
+          position: { x: 0, y: 0 },
+          size: { width: 400, height: 200 },
+          createdAt: new Date(insight.createdAt),
+          pinned: true,
+          metadata: {
+            source: 'workflow',
+            workflowId: insight.workflowId,
+            workflowName: insight.workflowName,
+          },
+        };
+      }
+    });
+
+    // Merge workflow insights with manually pinned cards
+    setCards([...pinnedCards, ...workflowCards]);
+  }, [pinnedCards, workflowInsights]);
+
+  const handleRemove = async (id: string) => {
+    const card = cards.find(c => c.id === id);
+
+    // If it's a workflow insight, delete from backend
+    if (card?.metadata?.source === 'workflow') {
+      try {
+        const { insightsApi } = await import('@/lib/api');
+        await insightsApi.deleteInsight(id);
+        // Remove from local state
+        setWorkflowInsights(prev => prev.filter(i => i.id !== id));
+      } catch (error) {
+        console.error('Error deleting workflow insight:', error);
+      }
+    } else {
+      // Otherwise, remove from local storage (via context)
+      removePinnedCard(id);
+    }
   };
 
   const handlePin = (id: string) => {
     togglePinCard(id);
   };
 
+  const handleDownload = async (id: string) => {
+    const cardElement = document.querySelector(`[data-card-id="${id}"]`) as HTMLElement;
+
+    if (!cardElement) {
+      console.error('Card element not found');
+      return;
+    }
+
+    try {
+      // Capture the card as canvas
+      const canvas = await html2canvas(cardElement, {
+        backgroundColor: '#ffffff',
+        scale: 2, // Higher quality
+        logging: false,
+        useCORS: true,
+      });
+
+      // Convert to PNG and download
+      const image = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      const card = cards.find(c => c.id === id);
+      const fileName = card?.title ? `${card.title.replace(/[^a-z0-9]/gi, '_')}.png` : 'visualization.png';
+
+      link.download = fileName;
+      link.href = image;
+      link.click();
+    } catch (error) {
+      console.error('Error downloading visualization:', error);
+      alert('Failed to download visualization. Please try again.');
+    }
+  };
+
   return (
-    <div className="h-full p-6 bg-muted/20">
-      <div className="mb-4 flex items-center justify-between">
+    <div className="h-full flex flex-col bg-muted/20">
+      <div className="p-6 pb-4 flex items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div>
           <h2 className="text-2xl font-bold">Insight Canvas</h2>
           <p className="text-sm text-muted-foreground">
@@ -294,28 +440,34 @@ export function InsightCanvas() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 auto-rows-min">
-        {cards.map(card => (
-          <DraggableCard
-            key={card.id}
-            card={card}
-            onRemove={handleRemove}
-            onPin={handlePin}
-          />
-        ))}
-      </div>
+      <ScrollArea className="flex-1">
+        <div className="p-6">
+          <div className="grid grid-cols-3 gap-4 auto-rows-min pb-6">
+            {cards.map(card => (
+              <div key={card.id} data-card-id={card.id}>
+                <DraggableCard
+                  card={card}
+                  onRemove={handleRemove}
+                  onPin={handlePin}
+                  onDownload={handleDownload}
+                />
+              </div>
+            ))}
+          </div>
 
-      {/* Empty State */}
-      {cards.length === 0 && (
-        <div className="flex flex-col items-center justify-center h-96 text-center">
-          <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No insights yet</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Start by asking questions in chat mode to generate insights
-          </p>
-          <Button>Go to Chat</Button>
+          {/* Empty State */}
+          {cards.length === 0 && (
+            <div className="flex flex-col items-center justify-center h-96 text-center">
+              <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No insights yet</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Start by asking questions in chat mode or pin visualizations from Explorer
+              </p>
+              <Button>Go to Chat</Button>
+            </div>
+          )}
         </div>
-      )}
+      </ScrollArea>
     </div>
   );
 }

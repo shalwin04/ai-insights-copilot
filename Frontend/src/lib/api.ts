@@ -48,3 +48,22 @@ export const explorerApi = {
   getColumnDetails: (datasetId: string, columnName: string) =>
     api.get(`/api/explorer/datasets/${datasetId}/columns/${encodeURIComponent(columnName)}`),
 };
+
+// Workflow endpoints
+export const workflowApi = {
+  getWorkflows: () => api.get('/api/workflows'),
+  getWorkflow: (id: string) => api.get(`/api/workflows/${id}`),
+  createWorkflow: (data: any) => api.post('/api/workflows', data),
+  updateWorkflow: (id: string, data: any) => api.put(`/api/workflows/${id}`, data),
+  deleteWorkflow: (id: string) => api.delete(`/api/workflows/${id}`),
+  executeWorkflow: (id: string) => api.post(`/api/workflows/${id}/execute`),
+  getExecutions: (id: string, limit?: number) =>
+    api.get(`/api/workflows/${id}/executions`, { params: { limit } }),
+  getStats: () => api.get('/api/workflows/stats/overview'),
+};
+
+// Insights endpoints
+export const insightsApi = {
+  getInsights: () => api.get('/api/insights'),
+  deleteInsight: (id: string) => api.delete(`/api/insights/${id}`),
+};

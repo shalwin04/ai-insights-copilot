@@ -19,6 +19,8 @@ export const INDICES = {
   FILES: 'files',
   CHAT_HISTORY: 'chat_history',
   INSIGHTS: 'insights',
+  WORKFLOWS: 'workflows',
+  WORKFLOW_EXECUTIONS: 'workflow_executions',
 };
 
 // Initialize indices
@@ -48,7 +50,7 @@ export async function initializeElasticsearch() {
               summary: { type: 'text' },
               embedding: {
                 type: 'dense_vector',
-                dims: 1536, // OpenAI embedding dimension
+                dims: 768, // Google Gemini text-embedding-004 dimension
               },
               metadata: { type: 'object' },
               content: { type: 'text' },
@@ -81,7 +83,7 @@ export async function initializeElasticsearch() {
               content: { type: 'text' },
               embedding: {
                 type: 'dense_vector',
-                dims: 1536,
+                dims: 768, // Google Gemini text-embedding-004 dimension
               },
               chunks: {
                 type: 'nested',
@@ -89,7 +91,7 @@ export async function initializeElasticsearch() {
                   text: { type: 'text' },
                   embedding: {
                     type: 'dense_vector',
-                    dims: 1536,
+                    dims: 768, // Google Gemini text-embedding-004 dimension
                   },
                   metadata: { type: 'object' },
                 },
@@ -150,6 +152,56 @@ export async function initializeElasticsearch() {
         },
       });
       console.log('✅ Created insights index');
+    }
+
+    // Create workflows index
+    const workflowsExists = await esClient.indices.exists({ index: INDICES.WORKFLOWS });
+    if (!workflowsExists) {
+      await (esClient.indices.create as any)({
+        index: INDICES.WORKFLOWS,
+        body: {
+          mappings: {
+            properties: {
+              id: { type: 'keyword' },
+              name: { type: 'text' },
+              description: { type: 'text' },
+              query: { type: 'text' },
+              enabled: { type: 'boolean' },
+              schedule: { type: 'keyword' },
+              actions: { type: 'object', enabled: false },
+              lastRun: { type: 'date' },
+              nextRun: { type: 'date' },
+              createdBy: { type: 'keyword' },
+              createdAt: { type: 'date' },
+              updatedAt: { type: 'date' },
+            },
+          },
+        },
+      });
+      console.log('✅ Created workflows index');
+    }
+
+    // Create workflow executions index
+    const executionsExists = await esClient.indices.exists({ index: INDICES.WORKFLOW_EXECUTIONS });
+    if (!executionsExists) {
+      await (esClient.indices.create as any)({
+        index: INDICES.WORKFLOW_EXECUTIONS,
+        body: {
+          mappings: {
+            properties: {
+              id: { type: 'keyword' },
+              workflowId: { type: 'keyword' },
+              startTime: { type: 'date' },
+              endTime: { type: 'date' },
+              status: { type: 'keyword' },
+              result: { type: 'object', enabled: false },
+              error: { type: 'text' },
+              duration: { type: 'integer' },
+            },
+          },
+        },
+      });
+      console.log('✅ Created workflow executions index');
     }
 
     console.log('✅ Elasticsearch indices initialized');

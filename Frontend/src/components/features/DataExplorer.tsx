@@ -176,7 +176,7 @@ export function DataExplorer({ onNavigateToChat }: DataExplorerProps = {}) {
       const headers = Object.keys(previewData[0]);
       const csvContent = [
         headers.join(','),
-        ...previewData.map(row =>
+        ...previewData.map((row: any) =>
           headers.map(header => {
             const value = row[header];
             // Escape values that contain commas or quotes

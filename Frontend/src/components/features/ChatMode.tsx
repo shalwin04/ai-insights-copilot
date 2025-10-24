@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Send, Mic, Paperclip, Sparkles, TrendingUp, Download, Pin, Loader2, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -108,7 +109,28 @@ export function ChatMode() {
                             : 'bg-muted'
                         }`}
                       >
-                        <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                        {message.role === 'user' ? (
+                          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                        ) : (
+                          <div className="text-sm prose prose-sm dark:prose-invert max-w-none">
+                            <ReactMarkdown
+                              components={{
+                                h1: ({ node, ...props }) => <h1 className="text-lg font-bold mt-4 mb-2" {...props} />,
+                                h2: ({ node, ...props }) => <h2 className="text-base font-bold mt-3 mb-2" {...props} />,
+                                h3: ({ node, ...props }) => <h3 className="text-sm font-bold mt-2 mb-1" {...props} />,
+                                p: ({ node, ...props }) => <p className="mb-2" {...props} />,
+                                ul: ({ node, ...props }) => <ul className="list-disc pl-6 mb-2" {...props} />,
+                                ol: ({ node, ...props }) => <ol className="list-decimal pl-6 mb-2" {...props} />,
+                                li: ({ node, ...props }) => <li className="mb-1" {...props} />,
+                                strong: ({ node, ...props }) => <strong className="font-semibold" {...props} />,
+                                em: ({ node, ...props }) => <em className="italic" {...props} />,
+                                code: ({ node, ...props }) => <code className="bg-muted px-1 py-0.5 rounded text-xs" {...props} />,
+                              }}
+                            >
+                              {message.content}
+                            </ReactMarkdown>
+                          </div>
+                        )}
                       </div>
 
                       {/* Chart Visualization for AI responses */}

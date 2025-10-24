@@ -76,22 +76,56 @@ Return only the search queries, one per line, no explanation.`;
         console.log("🔄 Generating optimized search query...");
         const queryResponse = await llm.invoke(queryPrompt);
         const optimizedQuery = (queryResponse.content as string).trim();
-        const firstQuery = optimizedQuery.split("\n")[0];
-        if (firstQuery) {
+        const firstQuery = optimizedQuery.split("\n")[0]?.trim();
+        if (firstQuery && firstQuery.length > 0) {
           searchQuery = firstQuery; // Use first query
         }
         console.log("   Optimized query:", searchQuery);
       }
     }
 
+    // Validate search query before performing search
+    if (!searchQuery || searchQuery.trim().length === 0) {
+      console.log("⚠️  Empty search query. Skipping search.");
+      return {
+        searchResults: null,
+        error: "Cannot perform search with empty query",
+        nextAgent: "analyzer",
+        metadata: {
+          ...state.metadata,
+          searchFailed: true,
+        },
+      };
+    }
+
+    // Clean and validate search query
+    searchQuery = searchQuery.trim();
+
     // Perform the search
     console.log("🌐 Performing web search...");
     console.log("   Search query:", searchQuery);
+    console.log("   Query length:", searchQuery.length);
     console.log("   API key (first 10 chars):", tavilyApiKey.substring(0, 10) + "...");
-    const searchResults = await searchTool.invoke(searchQuery);
 
-    console.log("✅ Search completed");
-    console.log("   Results found:", searchResults ? "Yes" : "No");
+    let searchResults;
+    try {
+      searchResults = await searchTool.invoke(searchQuery);
+      console.log("✅ Search completed");
+      console.log("   Results found:", searchResults ? "Yes" : "No");
+    } catch (searchError: any) {
+      console.error("❌ Tavily API Error:");
+      console.error("   Status:", searchError.response?.status);
+      console.error("   Status Text:", searchError.response?.statusText);
+      console.error("   Error Data:", JSON.stringify(searchError.response?.data, null, 2));
+      console.error("   Message:", searchError.message);
+
+      // Re-throw to be caught by outer try-catch
+      throw new Error(
+        `Tavily API error (${searchError.response?.status || "unknown"}): ${
+          searchError.response?.data?.error || searchError.message
+        }`
+      );
+    }
 
     // Parse search results (Tavily returns a JSON string)
     let parsedResults: any[] = [];

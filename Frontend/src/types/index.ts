@@ -30,6 +30,12 @@ export interface InsightCard {
   size: { width: number; height: number };
   createdAt: Date;
   pinned?: boolean;
+  metadata?: {
+    source?: string;
+    workflowId?: string;
+    workflowName?: string;
+    [key: string]: any;
+  };
 }
 
 export interface ChatMessage {

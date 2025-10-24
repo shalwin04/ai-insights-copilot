@@ -12,18 +12,17 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useDrive } from '@/hooks/useDrive';
 import { ConnectionModal } from '../features/ConnectionModal';
+import { WorkflowList } from '../features/WorkflowList';
+import { WorkflowBuilder } from '../features/WorkflowBuilder';
 import { ingestionApi } from '@/lib/api';
-import type { DataSource, Dataset, Workflow as WorkflowType } from '@/types';
+import type { DataSource, Dataset } from '@/types';
 
 interface SidebarProps {
   className?: string;
   onNavigateToChat?: () => void;
 }
 
-const mockWorkflows: WorkflowType[] = [
-  { id: '1', name: 'Weekly Sales Report', description: 'Generate sales summary', enabled: true, schedule: 'Every Monday 9:00 AM', query: 'Show me revenue by region' },
-  { id: '2', name: 'Monthly Expense Summary', description: 'Track expenses', enabled: false, query: 'Summarize expenses by category' },
-];
+// Removed mockWorkflows - now using real workflow data from WorkflowList component
 
 const dataSourceIcons = {
   'google-drive': Cloud,
@@ -44,6 +43,7 @@ export function Sidebar({ className, onNavigateToChat }: SidebarProps) {
   const [activeSection, setActiveSection] = useState<'home' | 'sources' | 'datasets' | 'workflows' | 'settings'>('home');
   const [searchQuery, setSearchQuery] = useState('');
   const [showConnectionModal, setShowConnectionModal] = useState(false);
+  const [showWorkflowBuilder, setShowWorkflowBuilder] = useState(false);
   const { isAuthenticated, user, login, isIngesting, ingestionStatus, triggerIngestion } = useAuth();
   const { files, fetchFiles } = useDrive();
 
@@ -204,7 +204,7 @@ export function Sidebar({ className, onNavigateToChat }: SidebarProps) {
         <NavItem icon={Home} label="Dashboard" section="home" />
         <NavItem icon={Database} label="Data Sources" section="sources" badge={dataSources.length} />
         <NavItem icon={FolderOpen} label="Datasets" section="datasets" badge={datasets.length} />
-        <NavItem icon={Workflow} label="Workflows" section="workflows" badge={mockWorkflows.length} />
+        <NavItem icon={Workflow} label="Workflows" section="workflows" />
       </div>
 
       {/* Content Area */}
@@ -407,29 +407,15 @@ export function Sidebar({ className, onNavigateToChat }: SidebarProps) {
 
           {activeSection === 'workflows' && (
             <div className="space-y-3">
-              <Button className="w-full" size="sm">
+              <Button
+                className="w-full"
+                size="sm"
+                onClick={() => setShowWorkflowBuilder(true)}
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 New Workflow
               </Button>
-              <div className="space-y-2">
-                {mockWorkflows.map((workflow) => (
-                  <div
-                    key={workflow.id}
-                    className="p-3 rounded-lg border bg-card hover:bg-accent cursor-pointer transition-colors"
-                  >
-                    <div className="flex items-start justify-between mb-1">
-                      <span className="font-medium text-sm">{workflow.name}</span>
-                      <Badge variant={workflow.enabled ? "success" : "secondary"} className="text-xs">
-                        {workflow.enabled ? 'ON' : 'OFF'}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground mb-2">{workflow.description}</p>
-                    {workflow.schedule && (
-                      <div className="text-xs text-muted-foreground">{workflow.schedule}</div>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <WorkflowList />
             </div>
           )}
         </div>
@@ -451,6 +437,12 @@ export function Sidebar({ className, onNavigateToChat }: SidebarProps) {
       <ConnectionModal
         open={showConnectionModal}
         onClose={() => setShowConnectionModal(false)}
+      />
+
+      {/* Workflow Builder Modal */}
+      <WorkflowBuilder
+        open={showWorkflowBuilder}
+        onClose={() => setShowWorkflowBuilder(false)}
       />
     </div>
   );
