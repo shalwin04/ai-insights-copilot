@@ -1,0 +1,159 @@
+import { useState } from 'react';
+import { Cloud, Database, HardDrive } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useAuth } from '@/contexts/AuthContext';
+
+interface ConnectionModalProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+const availableSources = [
+  {
+    id: 'google-drive',
+    name: 'Google Drive',
+    icon: Cloud,
+    description: 'Connect your Google Drive to analyze spreadsheets, CSVs, and documents',
+    status: 'available' as const,
+    features: ['CSV & Excel files', 'Google Sheets', 'PDF documents'],
+  },
+  {
+    id: 'onedrive',
+    name: 'OneDrive',
+    icon: Cloud,
+    description: 'Connect your Microsoft OneDrive for business and personal files',
+    status: 'coming-soon' as const,
+    features: ['Excel files', 'SharePoint integration', 'Cloud documents'],
+  },
+  {
+    id: 'notion',
+    name: 'Notion',
+    icon: Database,
+    description: 'Analyze your Notion databases and workspace content',
+    status: 'coming-soon' as const,
+    features: ['Databases', 'Pages', 'Tables'],
+  },
+  {
+    id: 'databricks',
+    name: 'Databricks',
+    icon: Database,
+    description: 'Connect to your Databricks data lakehouse',
+    status: 'coming-soon' as const,
+    features: ['Delta tables', 'SQL queries', 'Spark datasets'],
+  },
+  {
+    id: 'local',
+    name: 'Local Files',
+    icon: HardDrive,
+    description: 'Upload files directly from your computer',
+    status: 'coming-soon' as const,
+    features: ['CSV', 'Excel', 'JSON', 'Parquet'],
+  },
+];
+
+export function ConnectionModal({ open, onClose }: ConnectionModalProps) {
+  const { login } = useAuth();
+  const [connecting, setConnecting] = useState<string | null>(null);
+
+  const handleConnect = async (sourceId: string) => {
+    if (sourceId === 'google-drive') {
+      setConnecting(sourceId);
+      try {
+        await login();
+        // Close modal after successful connection
+        setTimeout(onClose, 1000);
+      } catch (error) {
+        console.error('Connection failed:', error);
+      } finally {
+        setConnecting(null);
+      }
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Connect Data Source</DialogTitle>
+          <DialogDescription>
+            Choose a data source to connect and start analyzing your data
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          {availableSources.map((source) => {
+            const Icon = source.icon;
+            const isAvailable = source.status === 'available';
+            const isConnecting = connecting === source.id;
+
+            return (
+              <div
+                key={source.id}
+                className={`p-4 border rounded-lg transition-all ${
+                  isAvailable
+                    ? 'hover:border-primary hover:shadow-md cursor-pointer'
+                    : 'opacity-60'
+                }`}
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/10 rounded-lg">
+                      <Icon className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold">{source.name}</h3>
+                    </div>
+                  </div>
+                  {!isAvailable && (
+                    <Badge variant="secondary" className="text-xs">
+                      Coming Soon
+                    </Badge>
+                  )}
+                </div>
+
+                <p className="text-sm text-muted-foreground mb-3">
+                  {source.description}
+                </p>
+
+                <div className="space-y-1 mb-4">
+                  {source.features.map((feature, idx) => (
+                    <div key={idx} className="text-xs text-muted-foreground flex items-center gap-2">
+                      <div className="w-1 h-1 bg-primary rounded-full" />
+                      {feature}
+                    </div>
+                  ))}
+                </div>
+
+                <Button
+                  className="w-full"
+                  variant={isAvailable ? 'default' : 'secondary'}
+                  disabled={!isAvailable || isConnecting}
+                  onClick={() => handleConnect(source.id)}
+                >
+                  {isConnecting ? 'Connecting...' : isAvailable ? 'Connect' : 'Coming Soon'}
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+          <h4 className="font-semibold text-sm mb-2">🔒 Security & Privacy</h4>
+          <p className="text-xs text-muted-foreground">
+            We only request read-only access to your files. Your data is processed securely
+            and we never store your files. You can revoke access anytime from your
+            account settings.
+          </p>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
