@@ -5,6 +5,15 @@ const API_URL =
   "http://localhost:3000" ||
   "https://analytics-copilot-backend-397196821609.europe-west1.run.app";
 
+// Derive API origin for message validation (e.g. http://localhost:3000)
+export const API_ORIGIN = (() => {
+  try {
+    return new URL(API_URL).origin;
+  } catch {
+    return API_URL;
+  }
+})();
+
 export const api = axios.create({
   baseURL: API_URL,
   withCredentials: true,

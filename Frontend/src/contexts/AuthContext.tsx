@@ -5,7 +5,7 @@ import {
   useEffect,
   type ReactNode,
 } from "react";
-import { authApi, ingestionApi } from "../lib/api";
+import { authApi, ingestionApi, API_ORIGIN } from "../lib/api";
 
 interface User {
   id?: string;
@@ -111,8 +111,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // will postMessage({type: 'oauth', success: true}) to window.opener.
       const handleMessage = (e: MessageEvent) => {
         try {
-          // Only accept messages from our origin
-          if (e.origin !== window.location.origin) return;
+          // Only accept messages from the backend API origin we trust
+          if (e.origin !== API_ORIGIN) return;
           // narrow the data safely
           const data = e.data as unknown;
           if (

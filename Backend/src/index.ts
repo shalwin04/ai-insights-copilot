@@ -19,15 +19,38 @@ dotenv.config();
 const app = express();
 const httpServer = createServer(app);
 const PORT = process.env.PORT || 3000;
-// Normalize frontend URL: remove any trailing slash to avoid CORS mismatches
-const FRONTEND_URL = (
-  process.env.FRONTEND_URL || "http://localhost:5173"
-).replace(/\/+$/, "");
+// Build an allowlist from env; support comma-separated values. Trim trailing slashes.
+const RAW_FRONTEND_URLS =
+  process.env.FRONTEND_URLS ||
+  process.env.FRONTEND_URL ||
+  "http://localhost:5173";
+const ALLOWED_ORIGINS = RAW_FRONTEND_URLS.split(",").map((s) =>
+  s.trim().replace(/\/+$/, "")
+);
+
+// Helper used by CORS to validate/echo the incoming origin when allowed
+function corsOriginValidator(
+  origin: string | undefined,
+  callback: (err: Error | null, allow?: boolean) => void
+) {
+  // Allow non-browser requests with no origin
+  if (!origin) return callback(null, true);
+  const normalized = origin.replace(/\/+$/, "");
+  // allow localhost during development, or any origin in the ALLOWED_ORIGINS list
+  if (
+    ALLOWED_ORIGINS.includes(normalized) ||
+    normalized.startsWith("http://localhost") ||
+    normalized.startsWith("http://127.0.0.1")
+  ) {
+    return callback(null, true);
+  }
+  return callback(new Error("Not allowed by CORS"));
+}
 
 // Initialize Socket.IO
 const io = new Server(httpServer, {
   cors: {
-    origin: FRONTEND_URL,
+    origin: corsOriginValidator as any,
     credentials: true,
   },
 });
@@ -35,7 +58,7 @@ const io = new Server(httpServer, {
 // Middleware
 app.use(
   cors({
-    origin: FRONTEND_URL,
+    origin: corsOriginValidator as any,
     credentials: true,
   })
 );
@@ -110,7 +133,7 @@ async function startServer() {
     httpServer.listen(PORT, () => {
       console.log(`✅ Server running on port ${PORT}`);
       console.log(`📡 WebSocket server ready`);
-      console.log(`🌐 Frontend: ${FRONTEND_URL}`);
+  console.log(`🌐 Frontend allowlist: ${ALLOWED_ORIGINS.join(', ')}`);
       console.log(
         `⏰ Workflow scheduler: ${workflowScheduler.getScheduledCount()} workflows scheduled`
       );

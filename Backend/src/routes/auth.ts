@@ -81,10 +81,13 @@ router.get("/google/callback", async (req: Request, res: Response) => {
           <script>
             (function(){
               try {
-                const targetOrigin = ${JSON.stringify(FRONTEND_URL)};
+                // Use wildcard targetOrigin here; the frontend will validate the
+                // sender origin (the backend API origin) before acting. This
+                // avoids mismatches between configured FRONTEND_URL and the
+                // actual caller origin in dev vs prod.
                 const payload = { type: 'oauth', success: true };
                 if (window.opener && !window.opener.closed) {
-                  window.opener.postMessage(payload, targetOrigin);
+                  window.opener.postMessage(payload, '*');
                 }
               } catch (e) {
                 // ignore
@@ -113,10 +116,9 @@ router.get("/google/callback", async (req: Request, res: Response) => {
           <script>
             (function(){
               try {
-                const targetOrigin = ${JSON.stringify(FRONTEND_URL)};
                 const payload = { type: 'oauth', success: false };
                 if (window.opener && !window.opener.closed) {
-                  window.opener.postMessage(payload, targetOrigin);
+                  window.opener.postMessage(payload, '*');
                 }
               } catch (e) {}
               setTimeout(() => { try { window.close(); } catch(e){} }, 1200);
