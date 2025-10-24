@@ -133,7 +133,7 @@ async function startServer() {
     httpServer.listen(PORT, () => {
       console.log(`✅ Server running on port ${PORT}`);
       console.log(`📡 WebSocket server ready`);
-  console.log(`🌐 Frontend allowlist: ${ALLOWED_ORIGINS.join(', ')}`);
+      console.log(`🌐 Frontend allowlist: ${ALLOWED_ORIGINS.join(", ")}`);
       console.log(
         `⏰ Workflow scheduler: ${workflowScheduler.getScheduledCount()} workflows scheduled`
       );
