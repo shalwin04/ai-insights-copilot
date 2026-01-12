@@ -2,8 +2,6 @@
 
 > Your intelligent AI assistant for Tableau Cloud - powered by Google Gemini and LangGraph agents
 
-**Built for Tableau 2025 Hackathon** 🏆
-
 An AI-powered analytics platform that transforms how you interact with Tableau Cloud. Chat with your dashboards, discover visualizations through natural language, and get instant insights from your data using Google Gemini AI.
 
 [![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-Visit_App-blue?style=for-the-badge)](https://ai-insights-copilot.vercel.app/)
