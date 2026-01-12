@@ -20,8 +20,12 @@
     "@langchain/google-genai": "^1.0.0",
     "@langchain/langgraph": "^0.4.9",
     "@langchain/openai": "^0.6.16",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/express-session": "^1.18.2",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.0.0",
+    "@types/node": "^24.6.2",
     "@types/node-cron": "^3.0.11",
     "@types/papaparse": "^5.3.16",
     "@types/pdf-parse": "^1.1.5",
@@ -41,17 +45,13 @@
     "papaparse": "^5.5.3",
     "pdf-parse": "^2.3.0",
     "socket.io": "^4.8.1",
+    "typescript": "^5.9.3",
     "xlsx": "^0.18.5",
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.3",
-    "@types/express-session": "^1.18.2",
-    "@types/node": "^24.6.2",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
-    "tsx": "^4.21.0",
-    "typescript": "^5.9.3"
+    "tsx": "^4.21.0"
   }
 }
