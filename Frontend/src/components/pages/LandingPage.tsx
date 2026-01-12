@@ -121,7 +121,12 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
               Start Analyzing
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Button>
-            <Button size="lg" variant="outline" className="text-lg px-8 py-6">
+            <Button
+              size="lg"
+              variant="outline"
+              className="text-lg px-8 py-6"
+              onClick={() => window.open('https://youtu.be/n80pcvHKyI4', '_blank')}
+            >
               Watch Demo
             </Button>
           </motion.div>

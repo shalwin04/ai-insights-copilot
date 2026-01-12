@@ -6,17 +6,32 @@
 
 An AI-powered analytics platform that transforms how you interact with Tableau Cloud. Chat with your dashboards, discover visualizations through natural language, and get instant insights from your data using Google Gemini AI.
 
+[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-Visit_App-blue?style=for-the-badge)](https://ai-insights-copilot.vercel.app/)
+[![GitHub](https://img.shields.io/badge/💻_GitHub-Source_Code-black?style=for-the-badge)](https://github.com/shalwin04/ai-insights-copilot)
+[![YouTube](https://img.shields.io/badge/🎥_Demo_Video-Watch_Now-red?style=for-the-badge)](https://youtu.be/n80pcvHKyI4)
+
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![Tableau](https://img.shields.io/badge/Tableau-Cloud-orange.svg)
 ![Gemini](https://img.shields.io/badge/Gemini-Pro-purple.svg)
 ![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)
 
+---
+
+## 🔗 Quick Links
+
+- 🌐 **Live Demo**: https://ai-insights-copilot.vercel.app/
+- 💻 **GitHub Repository**: https://github.com/shalwin04/ai-insights-copilot
+- 📡 **Backend API**: https://tableau-copilot-backend.onrender.com
+- 🎥 **Demo Video**: https://youtu.be/n80pcvHKyI4
+- 📚 **Documentation**: [Setup Guide](./SETUP_GUIDE.md) | [Architecture](./ARCHITECTURE.md)
+
 ## 🎯 What Makes This Special?
 
 Tableau AI Copilot bridges the gap between Tableau's powerful visualizations and natural language interaction. Instead of browsing through workbooks and views manually, simply ask questions and let AI find, display, and explain your dashboards.
 
 **Key Innovation:**
+
 - 🤖 **AI-Powered Discovery**: Semantic search across all your Tableau workbooks, views, and data sources
 - 💬 **Natural Language Chat**: "Show me sales dashboard" → Instantly displays the right Tableau visualization
 - 🎨 **Embedded Visualizations**: View and interact with Tableau dashboards directly in the chat interface
@@ -25,6 +40,7 @@ Tableau AI Copilot bridges the gap between Tableau's powerful visualizations and
 ## ✨ Features
 
 ### 📊 Tableau Integration
+
 - **Connected Apps JWT Authentication**: Secure, server-side authentication with Tableau Cloud
 - **Semantic Workbook Discovery**: AI-powered search across workbooks, views, and data sources
 - **Embedded Tableau Embedding API v3**: Interactive dashboards rendered directly in the chat
@@ -32,6 +48,7 @@ Tableau AI Copilot bridges the gap between Tableau's powerful visualizations and
 - **Multi-Project Support**: Search across all your Tableau projects and folders
 
 ### 🤖 Intelligent AI Agents (LangGraph)
+
 - **Router Agent**: Classifies user intent (Tableau discovery, data analysis, visualization)
 - **Tableau Discovery Agent**: Semantic search for Tableau content with OpenAI embeddings
 - **Data Retriever Agent**: Finds relevant datasets from Google Drive and other sources
@@ -39,18 +56,21 @@ Tableau AI Copilot bridges the gap between Tableau's powerful visualizations and
 - **Summarizer Agent**: Generates natural language insights and recommendations
 
 ### 📈 Data Analytics
+
 - **Multi-Source Data Integration**: Google Drive, CSV uploads, Excel files
 - **Semantic Search**: Vector-based search using OpenAI embeddings
 - **Automated Workflows**: Create pipelines from data ingestion to insights
 - **Real-Time Insights**: Live progress updates as agents analyze your data
 
 ### 💬 Natural Language Interface
+
 - Chat with Tableau dashboards using plain English
 - Context-aware conversations with memory
 - Real-time agent progress indicators
 - Session history persistence
 
 ### 🎨 Beautiful User Interface
+
 - Modern React UI with Tailwind CSS and shadcn/ui
 - Responsive design with dark mode support
 - Real-time WebSocket updates
@@ -72,6 +92,7 @@ External Data Sources (Google Drive, Files)
 ```
 
 **Key Technologies:**
+
 - **AI/ML**: LangChain.js, LangGraph, Google Gemini Pro, OpenAI Embeddings
 - **Tableau**: REST API v3.22, Embedding API v3, Connected Apps (Direct Trust)
 - **Backend**: Node.js, Express, TypeScript, Socket.IO
@@ -107,19 +128,14 @@ cat > .env << EOF
 # Server
 PORT=3000
 SESSION_SECRET=your-secure-random-secret
-FRONTEND_URL=http://localhost:5173
-
-# Google OAuth (for Drive integration)
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/google/callback
+FRONTEND_URL=
 
 # AI Services
 OPENAI_API_KEY=your-openai-api-key
 GOOGLE_AI_API_KEY=your-gemini-api-key
 
 # Tableau Cloud Connected Apps (Direct Trust)
-TABLEAU_SERVER_URL=https://10ax.online.tableau.com
+TABLEAU_SERVER_URL=
 TABLEAU_SITE_NAME=your-site-name
 TABLEAU_USERNAME=your-tableau-username
 TABLEAU_CLIENT_ID=your-connected-app-client-id
@@ -155,12 +171,14 @@ EOF
 ### 4. Start the Application
 
 **Terminal 1 (Backend):**
+
 ```bash
 cd Backend
 npm run dev
 ```
 
 **Terminal 2 (Frontend):**
+
 ```bash
 cd Frontend
 npm run dev
@@ -193,12 +211,14 @@ http://localhost:5173
 Ask natural language questions:
 
 **Tableau Discovery:**
+
 - "Show me the sales dashboard"
 - "Find visualizations about revenue"
 - "What Tableau reports do I have for Q4?"
 - "Display the executive summary workbook"
 
 **Data Analysis:**
+
 - "Analyze trends in my sales data"
 - "What are the key insights from Q4?"
 - "Compare revenue across regions"
@@ -207,6 +227,7 @@ Ask natural language questions:
 ### 4. Watch the AI Agents Work
 
 The interface shows real-time progress:
+
 1. 🤖 **Router** analyzes your intent
 2. 📊 **Tableau Discovery** searches for relevant dashboards
 3. 🔍 **Retriever** finds additional data if needed
@@ -223,23 +244,23 @@ The interface shows real-time progress:
 
 ### Tableau Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/tableau/auth/connect` | POST | Connect with server-side credentials |
-| `/api/tableau/auth/status` | GET | Check Tableau authentication status |
-| `/api/tableau/auth/embedding-token` | GET | Get JWT token for embedding |
-| `/api/tableau/workbooks` | GET | List all workbooks |
-| `/api/tableau/views` | GET | List all views |
-| `/api/tableau/views/:id/embed-url` | GET | Get embed URL for a view |
+| Endpoint                            | Method | Description                          |
+| ----------------------------------- | ------ | ------------------------------------ |
+| `/api/tableau/auth/connect`         | POST   | Connect with server-side credentials |
+| `/api/tableau/auth/status`          | GET    | Check Tableau authentication status  |
+| `/api/tableau/auth/embedding-token` | GET    | Get JWT token for embedding          |
+| `/api/tableau/workbooks`            | GET    | List all workbooks                   |
+| `/api/tableau/views`                | GET    | List all views                       |
+| `/api/tableau/views/:id/embed-url`  | GET    | Get embed URL for a view             |
 
 ### Core Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/auth/google` | GET | Initiate Google OAuth |
-| `/api/drive/files` | GET | List Google Drive files |
-| `/api/chat/message` | POST | Send chat message to AI agents |
-| `/api/workflows` | GET | List automated workflows |
+| Endpoint            | Method | Description                    |
+| ------------------- | ------ | ------------------------------ |
+| `/api/auth/google`  | GET    | Initiate Google OAuth          |
+| `/api/drive/files`  | GET    | List Google Drive files        |
+| `/api/chat/message` | POST   | Send chat message to AI agents |
+| `/api/workflows`    | GET    | List automated workflows       |
 
 ## 🧪 Testing
 
@@ -276,21 +297,27 @@ curl -X POST http://localhost:3000/api/chat/message \
 ## 🎨 Features Showcase
 
 ### Semantic Search for Tableau
+
 Uses OpenAI embeddings to create vector representations of:
+
 - Workbook names and descriptions
 - View names and content URLs
 - Data source metadata
 - Project names and tags
 
 ### Embedded Visualizations
+
 Tableau Embedding API v3 with:
+
 - JWT token authentication
 - Interactive filters and parameters
 - Full toolbar support (refresh, download, maximize)
 - Responsive sizing
 
 ### Multi-Agent Workflow
+
 LangGraph orchestrates:
+
 1. Intent classification
 2. Parallel data retrieval (Tableau + files)
 3. Context-aware analysis
@@ -309,6 +336,7 @@ echo $TABLEAU_CLIENT_ID
 ```
 
 **Common Issues:**
+
 - Invalid Connected App credentials → Verify Client ID and Secret in Tableau Cloud
 - Token expired → Server automatically refreshes tokens
 - Missing scopes → Ensure Connected App has read and embed permissions
@@ -316,11 +344,13 @@ echo $TABLEAU_CLIENT_ID
 ### Embedding Authentication Errors
 
 If visualizations show "Sign in required":
+
 1. Check that `/api/tableau/auth/embedding-token` returns a valid JWT
 2. Verify Connected App has `tableau:views:embed` scope
 3. Ensure TABLEAU_USERNAME matches your Tableau Cloud username
 
 ### OpenAI/Gemini API Errors
+
 - Verify API keys in `.env`
 - Check API credits and rate limits
 - Gemini Pro requires billing enabled on Google Cloud
@@ -361,40 +391,6 @@ tableau-ai-copilot/
 └── README.md
 ```
 
-## 🏆 Hackathon Highlights
-
-**Innovation:**
-- First AI copilot specifically designed for Tableau Cloud
-- Semantic search revolutionizes dashboard discovery
-- Natural language interface makes BI accessible to everyone
-
-**Technical Excellence:**
-- Tableau Connected Apps with JWT for secure authentication
-- Embedding API v3 for modern, responsive visualizations
-- Multi-agent LangGraph workflow for intelligent analysis
-- Google Gemini Pro for advanced reasoning
-
-**User Impact:**
-- Reduces time to find dashboards from minutes to seconds
-- Makes Tableau accessible through natural conversation
-- Enables non-technical users to discover insights independently
-
-## 🚧 Roadmap
-
-### Completed ✅
-- ✅ Tableau Connected Apps JWT authentication
-- ✅ Semantic workbook discovery
-- ✅ Embedded Tableau Embedding API v3
-- ✅ Multi-agent LangGraph workflow
-- ✅ Natural language chat interface
-
-### Planned 🚀
-- [ ] Tableau Pulse integration
-- [ ] Ask Data AI assistant
-- [ ] Custom view generation
-- [ ] Multi-tenant support
-- [ ] Slack/Teams bot integration
-
 ## 🙏 Acknowledgments
 
 - **Tableau** for the powerful analytics platform and Embedding API
@@ -402,18 +398,6 @@ tableau-ai-copilot/
 - **LangChain.js** for agent orchestration framework
 - **OpenAI** for embeddings API
 - **shadcn/ui** for beautiful UI components
-
-## 📧 Support
-
-For questions about this hackathon submission:
-- **GitHub**: [Project Repository](https://github.com/your-repo)
-- **Demo**: [Live Demo](https://your-demo-url.vercel.app)
-
-## 🌟 Show Your Support
-
-Built for **Tableau 2025 Hackathon** with ❤️
-
-Give a ⭐️ if you like this project!
 
 ---
 
