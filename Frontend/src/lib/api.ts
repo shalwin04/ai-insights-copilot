@@ -3,7 +3,7 @@ import axios from "axios";
 const API_URL =
   import.meta.env.VITE_API_URL ||
   "http://localhost:3000" ||
-  "https://analytics-copilot-backend-397196821609.europe-west1.run.app";
+  "https://tableau-copilot-backend.onrender.com";
 
 // Derive API origin for message validation (e.g. http://localhost:3000)
 export const API_ORIGIN = (() => {
@@ -109,8 +109,7 @@ export const tableauApi = {
   // Views
   getViews: () => api.get("/api/tableau/views"),
   getView: (viewId: string) => api.get(`/api/tableau/views/${viewId}`),
-  getViewData: (viewId: string) =>
-    api.get(`/api/tableau/views/${viewId}/data`),
+  getViewData: (viewId: string) => api.get(`/api/tableau/views/${viewId}/data`),
   getViewEmbedUrl: (viewId: string) =>
     api.get(`/api/tableau/views/${viewId}/embed-url`),
 
