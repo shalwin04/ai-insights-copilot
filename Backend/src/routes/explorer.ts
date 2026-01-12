@@ -1,5 +1,5 @@
 import express, { type Request, type Response } from 'express';
-import { esClient, INDICES } from '../config/elasticsearch.js';
+import { COLLECTIONS, getCollection, getDocument } from '../config/chromadb.js';
 import { datasetExplorerAgent } from '../agents/datasetExplorer.js';
 import { insightsGeneratorAgent } from '../agents/insightsGenerator.js';
 import { visualizerAgent } from '../agents/visualizer.js';
@@ -22,28 +22,27 @@ router.get('/datasets', requireAuth, async (req: Request, res: Response) => {
   try {
     const userId = req.session!.user?.id || 'anonymous';
 
-    // Query Elasticsearch for user's datasets
-    const result = await (esClient.search as any)({
-      index: INDICES.DATASETS,
-      body: {
-        query: {
-          term: { userId },
-        },
-        size: 100,
-        sort: [{ createdAt: 'desc' }],
-      },
+    // Query ChromaDB for user's datasets
+    const collection = getCollection(COLLECTIONS.DATASETS);
+    const result = await collection.get({
+      where: { userId },
     });
 
-    const datasets = result.hits.hits.map((hit: any) => ({
-      id: hit._id,
-      name: hit._source.name,
-      type: hit._source.type || 'unknown',
-      source: hit._source.source || 'local',
-      rows: hit._source.rowCount,
-      columns: hit._source.columnCount || 0,
-      size: hit._source.size || 'Unknown',
-      lastModified: hit._source.createdAt,
-    }));
+    const datasets = (result.ids || []).map((id: string, index: number) => {
+      const metadata = result.metadatas?.[index] || {};
+      return {
+        id,
+        name: metadata.name,
+        type: metadata.type || 'unknown',
+        source: metadata.source || 'local',
+        rows: metadata.rowCount,
+        columns: metadata.columnCount || 0,
+        size: metadata.size || 'Unknown',
+        lastModified: metadata.createdAt,
+      };
+    }).sort((a: any, b: any) =>
+      new Date(b.lastModified).getTime() - new Date(a.lastModified).getTime()
+    );
 
     res.json({ datasets });
   } catch (error: any) {
@@ -65,17 +64,12 @@ router.get('/datasets/:datasetId/overview', requireAuth, async (req: Request, re
 
     console.log(`🔍 Getting overview for dataset: ${datasetId}`);
 
-    // Get dataset from Elasticsearch
-    const datasetDoc = await (esClient.get as any)({
-      index: INDICES.DATASETS,
-      id: datasetId,
-    });
+    // Get dataset from ChromaDB
+    const dataset = await getDocument(COLLECTIONS.DATASETS, datasetId!);
 
-    if (!datasetDoc.found) {
+    if (!dataset) {
       return res.status(404).json({ error: 'Dataset not found' });
     }
-
-    const dataset = datasetDoc._source as any;
 
     // Check authorization
     if (dataset.userId !== userId) {
@@ -129,17 +123,12 @@ router.post('/datasets/:datasetId/insights', requireAuth, async (req: Request, r
 
     console.log(`💡 Generating insights for dataset: ${datasetId}`);
 
-    // Get dataset from Elasticsearch
-    const datasetDoc = await (esClient.get as any)({
-      index: INDICES.DATASETS,
-      id: datasetId,
-    });
+    // Get dataset from ChromaDB
+    const dataset = await getDocument(COLLECTIONS.DATASETS, datasetId!);
 
-    if (!datasetDoc.found) {
+    if (!dataset) {
       return res.status(404).json({ error: 'Dataset not found' });
     }
-
-    const dataset = datasetDoc._source as any;
 
     // Check authorization
     if (dataset.userId !== userId) {
@@ -185,17 +174,12 @@ router.post('/datasets/:datasetId/visualizations', requireAuth, async (req: Requ
 
     console.log(`📊 Generating visualizations for dataset: ${datasetId}`);
 
-    // Get dataset from Elasticsearch
-    const datasetDoc = await (esClient.get as any)({
-      index: INDICES.DATASETS,
-      id: datasetId,
-    });
+    // Get dataset from ChromaDB
+    const dataset = await getDocument(COLLECTIONS.DATASETS, datasetId!);
 
-    if (!datasetDoc.found) {
+    if (!dataset) {
       return res.status(404).json({ error: 'Dataset not found' });
     }
-
-    const dataset = datasetDoc._source as any;
 
     // Check authorization
     if (dataset.userId !== userId) {
@@ -250,17 +234,12 @@ router.get('/datasets/:datasetId/columns/:columnName', requireAuth, async (req: 
     const userId = req.session!.user?.id || 'anonymous';
     const colName = columnName ? decodeURIComponent(columnName) : '';
 
-    // Get dataset
-    const datasetDoc = await (esClient.get as any)({
-      index: INDICES.DATASETS,
-      id: datasetId,
-    });
+    // Get dataset from ChromaDB
+    const dataset = await getDocument(COLLECTIONS.DATASETS, datasetId!);
 
-    if (!datasetDoc.found) {
+    if (!dataset) {
       return res.status(404).json({ error: 'Dataset not found' });
     }
-
-    const dataset = datasetDoc._source as any;
 
     if (dataset.userId !== userId) {
       return res.status(403).json({ error: 'Access denied' });

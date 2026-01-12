@@ -88,3 +88,32 @@ export const insightsApi = {
   getInsights: () => api.get("/api/insights"),
   deleteInsight: (id: string) => api.delete(`/api/insights/${id}`),
 };
+
+// Tableau endpoints
+export const tableauApi = {
+  // Authentication
+  connect: () => api.post("/api/tableau/auth/connect"),
+  authenticateJWT: (username: string, secretId: string) =>
+    api.post("/api/tableau/auth/jwt", { username, secretId }),
+  getAuthStatus: () => api.get("/api/tableau/auth/status"),
+  getEmbeddingToken: () => api.get("/api/tableau/auth/embedding-token"),
+  signOut: () => api.post("/api/tableau/auth/signout"),
+
+  // Workbooks
+  getWorkbooks: () => api.get("/api/tableau/workbooks"),
+  getWorkbook: (workbookId: string) =>
+    api.get(`/api/tableau/workbooks/${workbookId}`),
+  getWorkbookViews: (workbookId: string) =>
+    api.get(`/api/tableau/workbooks/${workbookId}/views`),
+
+  // Views
+  getViews: () => api.get("/api/tableau/views"),
+  getView: (viewId: string) => api.get(`/api/tableau/views/${viewId}`),
+  getViewData: (viewId: string) =>
+    api.get(`/api/tableau/views/${viewId}/data`),
+  getViewEmbedUrl: (viewId: string) =>
+    api.get(`/api/tableau/views/${viewId}/embed-url`),
+
+  // Data sources
+  getDataSources: () => api.get("/api/tableau/datasources"),
+};

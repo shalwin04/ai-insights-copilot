@@ -6,7 +6,8 @@ import { analyzerAgent } from '../agents/analyzer.js';
 import { summarizerAgent } from '../agents/summarizer.js';
 import { conversationalBrainAgent } from '../agents/conversational.js';
 import { visualizerAgent } from '../agents/visualizer.js';
-import { queryGeneratorAgent } from '../agents/queryGenerator.js';
+import { tableauAgent } from '../agents/tableauAgent.js';
+// import { queryGeneratorAgent } from '../agents/queryGenerator.js'; // Commented out - not needed for Tableau hackathon
 import { searchAgent } from '../agents/search.js';
 
 /**
@@ -40,13 +41,15 @@ export function createWorkflow() {
     .addNode('summarizer', summarizerAgent)
     .addNode('conversational_brain', conversationalBrainAgent)
     .addNode('visualizer', visualizerAgent)
-    .addNode('query_generator', queryGeneratorAgent)
+    .addNode('tableau', tableauAgent)
+    // .addNode('query_generator', queryGeneratorAgent) // Commented out - not needed for Tableau hackathon
 
     // Define edges
     .addEdge(START, 'router')
     .addConditionalEdges('router', routeNext, {
       retriever: 'retriever',
       search: 'search',
+      tableau: 'tableau',
       analyzer: 'analyzer',
       summarizer: 'summarizer',
       conversational_brain: 'conversational_brain',
@@ -66,17 +69,21 @@ export function createWorkflow() {
     .addConditionalEdges('analyzer', routeNext, {
       summarizer: 'summarizer',
       visualizer: 'visualizer',
-      query_generator: 'query_generator',
+      // query_generator: 'query_generator', // Commented out - not needed for Tableau hackathon
       [END]: END,
     })
     .addConditionalEdges('visualizer', routeNext, {
       summarizer: 'summarizer',
       [END]: END,
     })
-    .addConditionalEdges('query_generator', routeNext, {
+    .addConditionalEdges('tableau', routeNext, {
       summarizer: 'summarizer',
       [END]: END,
     })
+    // .addConditionalEdges('query_generator', routeNext, { // Commented out - not needed for Tableau hackathon
+    //   summarizer: 'summarizer',
+    //   [END]: END,
+    // })
     .addConditionalEdges('summarizer', routeNext, {
       [END]: END,
     })

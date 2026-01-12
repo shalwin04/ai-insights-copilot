@@ -11,11 +11,25 @@ export interface Visualization {
   description?: string;
 }
 
+export interface TableauView {
+  id: string;
+  name: string;
+  type: string;
+  description: string;
+  relevanceScore: number;
+  workbookName?: string;
+  workbookId?: string;
+  projectName?: string;
+  embedUrl?: string;
+  fullEmbedUrl?: string;
+}
+
 export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
   visualization?: Visualization;
+  tableauViews?: TableauView[];
   metadata?: {
     intent?: string;
     datasetsUsed?: string[];
@@ -147,10 +161,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   }, [isAuthenticated]);
 
   const sendMessage = useCallback(async (message: string) => {
-    if (!isAuthenticated || !socket) {
-      setError('Not authenticated or connected');
-      return;
-    }
+    // Socket is optional - we use REST API for messages
+    // Google auth is also optional - Tableau queries work independently
 
     try {
       setIsLoading(true);
@@ -175,7 +187,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         body: JSON.stringify({
           message,
           sessionId: currentSession,
-          socketId: socket.id, // Pass socket ID for progress updates
+          socketId: socket?.id, // Pass socket ID for progress updates (optional)
         }),
       });
 
@@ -200,6 +212,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         content: result.message,
         timestamp: new Date(),
         visualization: result.visualization, // Add visualization from backend
+        tableauViews: result.tableauViews, // Add Tableau views from backend
         metadata: {
           intent: result.intent,
           datasetsUsed: result.datasets?.map((d: Dataset) => d.id),

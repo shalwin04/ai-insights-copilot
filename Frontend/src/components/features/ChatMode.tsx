@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Mic, Paperclip, Sparkles, TrendingUp, Download, Pin, Loader2, AlertCircle } from 'lucide-react';
+import { Send, Mic, Paperclip, Sparkles, TrendingUp, Download, Pin, Loader2, AlertCircle, ExternalLink, BarChart3 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useChat } from '@/contexts/ChatContext';
 import { useCanvas } from '@/contexts/CanvasContext';
+import { useTableau } from '@/contexts/TableauContext';
+import { TableauViz } from './TableauViz';
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   ScatterChart, Scatter, XAxis, YAxis, CartesianGrid,
@@ -22,6 +24,7 @@ const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4'
 export function ChatMode() {
   const { messages, sendMessage, isLoading, error, clearError, agentProgress } = useChat();
   const { addPinnedVisualization } = useCanvas();
+  const { isAuthenticated: tableauAuthenticated, connect: connectTableau } = useTableau();
   const [input, setInput] = useState('');
   const [pinnedMessageId, setPinnedMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -254,6 +257,95 @@ export function ChatMode() {
                             </CardContent>
                           </Card>
                         </motion.div>
+                      )}
+
+                      {/* Tableau Visualizations */}
+                      {message.role === 'assistant' && message.tableauViews && message.tableauViews.length > 0 && (
+                        <div className="mt-3 space-y-3">
+                          <h4 className="text-sm font-semibold flex items-center gap-2">
+                            <BarChart3 className="h-4 w-4 text-blue-600" />
+                            Found {message.tableauViews.length} Tableau {message.tableauViews.length === 1 ? 'Visualization' : 'Visualizations'}
+                          </h4>
+
+                          {/* Check Tableau Authentication */}
+                          {!tableauAuthenticated ? (
+                            <Alert className="border-orange-200 bg-orange-50">
+                              <AlertCircle className="h-4 w-4 text-orange-600" />
+                              <AlertDescription className="flex items-center justify-between">
+                                <div>
+                                  <p className="font-medium text-orange-900">Tableau Not Connected</p>
+                                  <p className="text-sm text-orange-700 mt-1">
+                                    Connect to Tableau Cloud to view these visualizations
+                                  </p>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  onClick={connectTableau}
+                                  className="ml-4"
+                                >
+                                  Connect Now
+                                </Button>
+                              </AlertDescription>
+                            </Alert>
+                          ) : (
+                            <>
+                              {message.tableauViews.map((view) => {
+                                console.log('📊 Rendering Tableau view in chat:', {
+                                  name: view.name,
+                                  fullEmbedUrl: view.fullEmbedUrl,
+                                  embedUrl: view.embedUrl,
+                                  workbookName: view.workbookName,
+                                });
+                                return (
+                                <Card key={view.id} className="overflow-hidden">
+                                  <CardContent className="p-4">
+                                    <div className="mb-3">
+                                      <div className="flex items-start justify-between mb-2">
+                                        <div className="flex-1">
+                                          <h5 className="text-sm font-semibold">{view.name}</h5>
+                                          <p className="text-xs text-muted-foreground mt-1">{view.description}</p>
+                                          {view.workbookName && (
+                                            <Badge variant="outline" className="mt-2 text-xs">
+                                              {view.workbookName}
+                                            </Badge>
+                                          )}
+                                        </div>
+                                        <Badge variant="secondary" className="text-xs">
+                                          {Math.round(view.relevanceScore * 100)}% match
+                                        </Badge>
+                                      </div>
+                                    </div>
+                                    {view.fullEmbedUrl && (
+                                      <TableauViz
+                                        src={view.fullEmbedUrl}
+                                        height="500px"
+                                        toolbar="bottom"
+                                      />
+                                    )}
+                                    <div className="mt-3 flex items-center gap-2">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        asChild
+                                      >
+                                        <a
+                                          href={view.fullEmbedUrl}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="flex items-center gap-1"
+                                        >
+                                          <ExternalLink className="h-3 w-3" />
+                                          Open in Tableau
+                                        </a>
+                                      </Button>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                                );
+                              })}
+                            </>
+                          )}
+                        </div>
                       )}
 
                       {/* Insights from metadata */}

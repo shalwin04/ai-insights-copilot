@@ -69,4 +69,4 @@ export interface ColumnMetadata {
   max?: number;
 }
 
-export type ViewMode = 'chat' | 'canvas' | 'explorer' | 'drive';
+export type ViewMode = 'chat' | 'canvas' | 'explorer' | 'drive' | 'tableau';

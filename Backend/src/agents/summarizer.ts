@@ -16,13 +16,27 @@ export async function summarizerAgent(state: AgentState): Promise<Partial<AgentS
   console.log('');
 
   try {
-    const { userQuery, relevantDatasets, analysisResults, visualization, intent, searchResults } = state;
+    const { userQuery, relevantDatasets, analysisResults, visualization, intent, searchResults, tableauViews } = state;
 
     // Build context for summarization
     const context: string[] = [];
 
     context.push(`User Query: "${userQuery}"`);
     context.push(`Intent: ${intent}`);
+
+    // Include Tableau visualizations if found
+    if (tableauViews && tableauViews.length > 0) {
+      context.push(`\nTableau Visualizations Found (${tableauViews.length}):`);
+      tableauViews.forEach((view, index) => {
+        context.push(`${index + 1}. "${view.name}" from workbook "${view.workbookName || 'Unknown'}"`);
+        context.push(`   - Relevance: ${Math.round(view.relevanceScore * 100)}%`);
+        context.push(`   - Description: ${view.description || 'Interactive Tableau dashboard'}`);
+        if (view.projectName) {
+          context.push(`   - Project: ${view.projectName}`);
+        }
+      });
+      context.push(`\nNote: These Tableau dashboards contain the actual data and will be displayed to the user.`);
+    }
 
     // Include search results if available
     if (searchResults) {
@@ -73,6 +87,16 @@ ${searchResults ? '5. Comparison with external benchmarks/industry data when rel
 
 Context:
 ${context.join('\n')}
+
+${tableauViews && tableauViews.length > 0 ? `
+IMPORTANT: Tableau visualizations have been found and WILL BE DISPLAYED to the user below your message.
+- DO NOT make up or simulate data
+- DO NOT say "I don't have access to the data"
+- Instead, explain that you found ${tableauViews.length} relevant Tableau dashboard(s)
+- Reference the specific dashboard names you found
+- Explain that the user can interact with the live Tableau visualizations to explore the actual data
+- Be brief since the interactive dashboards will provide the detailed data
+` : ''}
 
 Generate a helpful, professional response that directly answers the user's query.
 Be specific with numbers and findings when available.
@@ -126,6 +150,7 @@ If analysis is limited, explain what was found and suggest next steps.`;
       summary,
       insights,
       visualization, // Preserve visualization from previous agents
+      tableauViews, // Preserve Tableau views from previous agents
       nextAgent: null, // End of workflow
       messages: [
         {

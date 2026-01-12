@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Sparkles, Database, MessageSquare, BarChart3, Zap, Shield,
+  Database, MessageSquare, BarChart3, Zap, Shield,
   TrendingUp, Brain, Eye, Code, ArrowRight, Check, Github, Twitter
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -65,9 +65,9 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-              <Sparkles className="h-5 w-5 text-white" />
+              <BarChart3 className="h-5 w-5 text-white" />
             </div>
-            <span className="text-xl font-bold">Analytics Copilot</span>
+            <span className="text-xl font-bold">Tableau AI Copilot</span>
           </div>
           <div className="flex items-center gap-4">
             <Button variant="ghost">Documentation</Button>
@@ -86,8 +86,8 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
             transition={{ delay: 0.1 }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-8"
           >
-            <Sparkles className="h-4 w-4" />
-            Powered by Google Gemini AI
+            <BarChart3 className="h-4 w-4" />
+            Tableau + Google Gemini AI
           </motion.div>
 
           <motion.h1
@@ -96,9 +96,9 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            Transform Data Into
+            AI-Powered Analytics
             <br />
-            Intelligent Insights
+            for Tableau Cloud
           </motion.h1>
 
           <motion.p
@@ -107,8 +107,8 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
           >
-            Your AI-powered data analyst that understands your questions, explores your data,
-            and generates beautiful visualizations in seconds.
+            Your intelligent copilot for Tableau. Ask questions, discover visualizations,
+            and get instant insights from your dashboards using natural language.
           </motion.p>
 
           <motion.div
@@ -183,37 +183,37 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
             {
               icon: MessageSquare,
               title: 'Natural Language Queries',
-              description: 'Ask questions in plain English. No SQL or coding required.',
+              description: 'Chat with your Tableau dashboards using plain English. Find visualizations instantly.',
               color: 'from-blue-500 to-cyan-500',
             },
             {
               icon: BarChart3,
-              title: 'Intelligent Visualizations',
-              description: 'Auto-generates the perfect chart type for your data insights.',
+              title: 'Tableau Discovery',
+              description: 'Semantic search across workbooks, views, and data sources with AI.',
               color: 'from-purple-500 to-pink-500',
             },
             {
               icon: Database,
               title: 'Multi-Source Integration',
-              description: 'Connect Google Drive, upload CSVs, Excel files, and more.',
+              description: 'Connect Tableau Cloud, Google Drive, upload CSVs, Excel files, and more.',
               color: 'from-orange-500 to-red-500',
             },
             {
               icon: Brain,
               title: 'AI-Powered Analysis',
-              description: 'Gemini AI understands context and provides deep insights.',
+              description: 'Gemini AI understands your data context and provides deep insights.',
               color: 'from-green-500 to-emerald-500',
             },
             {
               icon: Eye,
-              title: 'Interactive Canvas',
-              description: 'Pin and arrange visualizations in a flexible workspace.',
+              title: 'Embedded Visualizations',
+              description: 'View and interact with Tableau dashboards directly in the chat.',
               color: 'from-yellow-500 to-orange-500',
             },
             {
               icon: Zap,
-              title: 'Real-time Collaboration',
-              description: 'Share insights and dashboards with your team instantly.',
+              title: 'Workflow Automation',
+              description: 'Create automated data pipelines from ingestion to insights.',
               color: 'from-indigo-500 to-purple-500',
             },
           ].map((feature, i) => (
@@ -248,18 +248,18 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">Why Analytics Copilot?</h2>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">Why Tableau AI Copilot?</h2>
             <p className="text-xl text-muted-foreground">
-              Built for modern data teams who want speed, accuracy, and insights
+              Built for Tableau users who want faster insights and smarter analytics
             </p>
           </motion.div>
 
           <div className="space-y-6">
             {[
-              { icon: Shield, text: '10x faster than traditional BI tools' },
-              { icon: TrendingUp, text: 'Increase data literacy across your organization' },
-              { icon: Code, text: 'No coding or technical skills required' },
-              { icon: Check, text: 'Enterprise-grade security and privacy' },
+              { icon: Shield, text: 'Find Tableau dashboards 10x faster with AI search' },
+              { icon: TrendingUp, text: 'Chat with your data in natural language' },
+              { icon: Code, text: 'No coding required - just ask questions' },
+              { icon: Check, text: 'Secure JWT authentication with Tableau Cloud' },
             ].map((benefit, i) => (
               <motion.div
                 key={i}
@@ -294,10 +294,10 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
 
           <div className="relative z-10">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Ready to Transform Your Data?
+              Ready to Supercharge Your Tableau?
             </h2>
             <p className="text-xl text-white/90 mb-8">
-              Join thousands of teams making better decisions with AI-powered analytics
+              Experience AI-powered analytics and natural language search for Tableau Cloud
             </p>
             <Button
               size="lg"
@@ -305,7 +305,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
               className="text-lg px-8 py-6 group"
               onClick={onGetStarted}
             >
-              Start Free Trial
+              Get Started Free
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
             </Button>
           </div>
@@ -319,12 +319,12 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                  <Sparkles className="h-5 w-5 text-white" />
+                  <BarChart3 className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-lg font-bold">Analytics Copilot</span>
+                <span className="text-lg font-bold">Tableau AI Copilot</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                AI-powered analytics for modern teams
+                AI-powered analytics for Tableau Cloud
               </p>
             </div>
             <div>
@@ -356,7 +356,7 @@ export function LandingPage({ onGetStarted }: LandingPageProps) {
             </div>
           </div>
           <div className="border-t pt-8 text-center text-sm text-muted-foreground">
-            <p>&copy; 2025 Analytics Copilot. All rights reserved.</p>
+            <p>&copy; 2025 Tableau AI Copilot. Built for Tableau 2025 Hackathon.</p>
           </div>
         </div>
       </footer>

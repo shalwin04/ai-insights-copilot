@@ -1,5 +1,5 @@
 import { getDriveInstance } from '../config/googleOAuth.js';
-import { esClient, INDICES } from '../config/elasticsearch.js';
+import { COLLECTIONS, upsertDocuments, deleteDocumentsByFilter } from '../config/chromadb.js';
 import { embeddings } from '../config/llm.js';
 import { parseFile, extractSample, calculateStatistics } from './parser.js';
 
@@ -203,14 +203,15 @@ export async function processFile(
         dataset.aggregatedData = extractSample(parsed.content, Math.min(100, parsed.content.length));
       }
 
-      // Index in Elasticsearch
+      // Index in ChromaDB
       console.log(`💾 Indexing dataset: ${fileName}`);
-      await esClient.index({
-        index: INDICES.DATASETS,
-        id: fileId,
-        document: dataset,
-        refresh: true,
-      });
+      await upsertDocuments(
+        COLLECTIONS.DATASETS,
+        [fileId],
+        [embedding],
+        [dataset],
+        [summary] // Store summary as document text
+      );
 
       job.progress = 100;
       job.status = 'completed';
@@ -310,56 +311,25 @@ export async function autoProcessDriveFiles(
 }
 
 /**
- * Delete all user data from Elasticsearch
+ * Delete all user data from ChromaDB
  */
 export async function deleteUserData(userId: string): Promise<void> {
   try {
     console.log(`🗑️  Deleting data for user: ${userId}`);
 
-    // Delete from datasets index
-    await esClient.deleteByQuery({
-      index: INDICES.DATASETS,
-      query: {
-        match: {
-          userId
-        }
-      },
-      refresh: true
-    }).catch(err => {
-      // Ignore if index doesn't exist or no documents found
-      if (err.meta?.body?.error?.type !== 'index_not_found_exception') {
-        console.error('Error deleting datasets:', err);
-      }
+    // Delete from datasets collection
+    await deleteDocumentsByFilter(COLLECTIONS.DATASETS, { userId }).catch(err => {
+      console.error('Error deleting datasets:', err);
     });
 
-    // Delete from chat history index
-    await esClient.deleteByQuery({
-      index: INDICES.CHAT_HISTORY,
-      query: {
-        match: {
-          userId
-        }
-      },
-      refresh: true
-    }).catch(err => {
-      if (err.meta?.body?.error?.type !== 'index_not_found_exception') {
-        console.error('Error deleting chat history:', err);
-      }
+    // Delete from chat history collection
+    await deleteDocumentsByFilter(COLLECTIONS.CHAT_HISTORY, { userId }).catch(err => {
+      console.error('Error deleting chat history:', err);
     });
 
-    // Delete from insights index
-    await esClient.deleteByQuery({
-      index: INDICES.INSIGHTS,
-      query: {
-        match: {
-          userId
-        }
-      },
-      refresh: true
-    }).catch(err => {
-      if (err.meta?.body?.error?.type !== 'index_not_found_exception') {
-        console.error('Error deleting insights:', err);
-      }
+    // Delete from insights collection
+    await deleteDocumentsByFilter(COLLECTIONS.INSIGHTS, { userId }).catch(err => {
+      console.error('Error deleting insights:', err);
     });
 
     console.log(`✅ Successfully deleted data for user: ${userId}`);

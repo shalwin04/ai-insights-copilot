@@ -31,25 +31,15 @@ router.get("/google/callback", async (req: Request, res: Response) => {
     // Store tokens in session or send to frontend
     if (req.session) {
       req.session.tokens = {
-        ...(tokens.access_token && { access_token: tokens.access_token }),
-        ...(tokens.refresh_token && { refresh_token: tokens.refresh_token }),
-        ...(tokens.scope && { scope: tokens.scope }),
-        ...(tokens.token_type && { token_type: tokens.token_type }),
-        ...(tokens.expiry_date && { expiry_date: tokens.expiry_date }),
-      };
+        access_token: tokens.access_token!,
+        refresh_token: tokens.refresh_token,
+        expiry_date: tokens.expiry_date,
+      } as any;
       req.session.user = {
-        ...(userInfo.id && { id: userInfo.id }),
-        ...(userInfo.email && { email: userInfo.email }),
-        ...(userInfo.verified_email !== undefined &&
-          userInfo.verified_email !== null && {
-            verified_email: userInfo.verified_email,
-          }),
-        ...(userInfo.name && { name: userInfo.name }),
-        ...(userInfo.given_name && { given_name: userInfo.given_name }),
-        ...(userInfo.family_name && { family_name: userInfo.family_name }),
-        ...(userInfo.picture && { picture: userInfo.picture }),
-        ...(userInfo.locale && { locale: userInfo.locale }),
-      };
+        id: userInfo.id || 'unknown',
+        email: userInfo.email,
+        name: userInfo.name,
+      } as any;
     }
 
     // Send HTML that posts a message to the opener (frontend) and then closes.
@@ -133,10 +123,8 @@ router.get("/google/callback", async (req: Request, res: Response) => {
 // Get current user info
 router.get("/user", (req: Request, res: Response) => {
   if (req.session && req.session.user) {
-    // Check if user has the required scope
-    const scope = req.session.tokens?.scope || "";
-    const hasRequiredScope =
-      scope.includes("drive.readonly") || scope.includes("drive");
+    // Check if user has access token (simplified scope check)
+    const hasRequiredScope = !!req.session.tokens?.access_token;
 
     if (!hasRequiredScope) {
       // Old tokens without proper scope - force logout

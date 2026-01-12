@@ -5,15 +5,18 @@ import App from './App.tsx'
 import { AuthProvider } from './contexts/AuthContext'
 import { ChatProvider } from './contexts/ChatContext'
 import { CanvasProvider } from './contexts/CanvasContext'
+import { TableauProvider } from './contexts/TableauContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
-      <ChatProvider>
-        <CanvasProvider>
-          <App />
-        </CanvasProvider>
-      </ChatProvider>
+      <TableauProvider>
+        <ChatProvider>
+          <CanvasProvider>
+            <App />
+          </CanvasProvider>
+        </ChatProvider>
+      </TableauProvider>
     </AuthProvider>
   </StrictMode>,
 )

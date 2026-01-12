@@ -32,6 +32,19 @@ export interface Insight {
   confidence: number;
 }
 
+export interface TableauView {
+  id: string;
+  name: string;
+  type: string;
+  description: string;
+  relevanceScore: number;
+  workbookName?: string;
+  workbookId?: string;
+  projectName?: string;
+  embedUrl?: string;
+  fullEmbedUrl?: string;
+}
+
 // Define the state annotation for LangGraph
 export const StateAnnotation = Annotation.Root({
   // User input
@@ -63,6 +76,12 @@ export const StateAnnotation = Annotation.Root({
   // Insights
   insights: Annotation<Insight[]>({
     reducer: (current, update) => [...current, ...update],
+    default: () => [],
+  }),
+
+  // Tableau views
+  tableauViews: Annotation<TableauView[]>({
+    reducer: (current, update) => update,
     default: () => [],
   }),
 

@@ -1,24 +1,36 @@
 import { useState } from 'react';
-import { MessageSquare, LayoutGrid, Database, Moon, Sun, FolderOpen } from 'lucide-react';
+import { MessageSquare, LayoutGrid, Database, Moon, Sun, FolderOpen, BarChart3, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { Sidebar } from './Sidebar';
 import { InsightHistory } from './InsightHistory';
 import { ChatMode } from '../features/ChatMode';
 import { InsightCanvas } from '../features/InsightCanvas';
 import { DataExplorer } from '../features/DataExplorer';
 import { GoogleDrive } from '../features/GoogleDrive';
+import { TableauPage } from '../pages/TableauPage';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { useTableau } from '@/contexts/TableauContext';
 import type { ViewMode } from '@/types';
 
 export function MainLayout() {
   const [viewMode, setViewMode] = useState<ViewMode>('chat');
   const [showHistory, _setShowHistory] = useState(true);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const { isAuthenticated, isLoading, connect } = useTableau();
 
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
     document.documentElement.classList.toggle('dark', newTheme === 'dark');
+  };
+
+  const handleTableauConnect = async () => {
+    try {
+      await connect();
+    } catch (error) {
+      console.error('Failed to connect to Tableau:', error);
+    }
   };
 
   return (
@@ -36,6 +48,10 @@ export function MainLayout() {
                 <MessageSquare className="h-4 w-4 mr-2" />
                 Chat
               </TabsTrigger>
+              <TabsTrigger value="tableau">
+                <BarChart3 className="h-4 w-4 mr-2" />
+                Tableau
+              </TabsTrigger>
               <TabsTrigger value="canvas">
                 <LayoutGrid className="h-4 w-4 mr-2" />
                 Canvas
@@ -51,7 +67,30 @@ export function MainLayout() {
             </TabsList>
           </Tabs>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {/* Tableau Connection Status */}
+            {isLoading ? (
+              <Badge variant="outline" className="gap-1.5">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Connecting...
+              </Badge>
+            ) : isAuthenticated ? (
+              <Badge variant="default" className="gap-1.5 bg-green-600 hover:bg-green-700">
+                <CheckCircle className="h-3 w-3" />
+                Tableau Connected
+              </Badge>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleTableauConnect}
+                className="gap-1.5"
+              >
+                <AlertCircle className="h-3.5 w-3.5 text-orange-600" />
+                Connect Tableau
+              </Button>
+            )}
+
             <Button
               variant="outline"
               size="icon"
@@ -69,6 +108,7 @@ export function MainLayout() {
         {/* Dynamic Content */}
         <div className="flex-1 overflow-hidden p-6">
           {viewMode === 'chat' && <ChatMode />}
+          {viewMode === 'tableau' && <TableauPage />}
           {viewMode === 'canvas' && <InsightCanvas />}
           {viewMode === 'explorer' && <DataExplorer onNavigateToChat={() => setViewMode('chat')} />}
           {viewMode === 'drive' && <GoogleDrive />}

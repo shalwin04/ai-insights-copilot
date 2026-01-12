@@ -1,5 +1,5 @@
 import express from 'express';
-import { esClient, INDICES } from '../config/elasticsearch.js';
+import { COLLECTIONS, getCollection, deleteDocument } from '../config/chromadb.js';
 
 const router = express.Router();
 
@@ -8,21 +8,24 @@ const router = express.Router();
  */
 router.get('/', async (req, res) => {
   try {
-    const response = await (esClient.search as any)({
-      index: INDICES.INSIGHTS,
-      body: {
-        query: {
-          term: { pinned: true },
-        },
-        sort: [{ createdAt: { order: 'desc' } }],
-        size: 100,
-      },
+    const collection = getCollection(COLLECTIONS.INSIGHTS);
+    if (!collection) {
+      return res.json({
+        success: true,
+        insights: [],
+        count: 0,
+      });
+    }
+    const response = await collection.get({
+      where: { pinned: true },
     });
 
-    const insights = response.hits.hits.map((hit: any) => ({
-      ...hit._source,
-      id: hit._id,
-    }));
+    const insights = (response.ids || []).map((id: string, index: number) => ({
+      id,
+      ...(response.metadatas?.[index] || {}),
+    })).sort((a: any, b: any) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
 
     res.json({
       success: true,
@@ -45,11 +48,7 @@ router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    await esClient.delete({
-      index: INDICES.INSIGHTS,
-      id,
-      refresh: 'true',
-    });
+    await deleteDocument(COLLECTIONS.INSIGHTS, id);
 
     res.json({
       success: true,

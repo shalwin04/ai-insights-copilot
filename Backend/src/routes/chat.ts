@@ -1,11 +1,12 @@
 import express, { type Request, type Response } from 'express';
 import { executeWorkflow } from '../langgraph/workflow.js';
-import { esClient, INDICES } from '../config/elasticsearch.js';
+import { COLLECTIONS, addDocuments, getCollection } from '../config/chromadb.js';
+import { tableauService } from '../services/tableau.js';
 import type { AgentState } from '../langgraph/state.js';
 
 const router = express.Router();
 
-// Middleware to check authentication
+// Middleware to check authentication (for Google Drive features)
 const requireAuth = (req: Request, res: Response, next: Function) => {
   if (!req.session || !req.session.tokens || !req.session.tokens.access_token) {
     return res.status(401).json({ error: 'Not authenticated' });
@@ -13,10 +14,20 @@ const requireAuth = (req: Request, res: Response, next: Function) => {
   next();
 };
 
+// Optional authentication - allows chat to work without Google login
+const optionalAuth = (req: Request, res: Response, next: Function) => {
+  // Just ensure session exists
+  if (!req.session) {
+    req.session = {} as any;
+  }
+  next();
+};
+
 /**
  * Send a chat message and get AI response
+ * Note: Google auth is optional - Tableau queries work with just Tableau auth
  */
-router.post('/message', requireAuth, async (req: Request, res: Response) => {
+router.post('/message', optionalAuth, async (req: Request, res: Response) => {
   try {
     const { message, sessionId } = req.body;
 
@@ -28,6 +39,15 @@ router.post('/message', requireAuth, async (req: Request, res: Response) => {
     const actualSessionId = sessionId || `session-${Date.now()}`;
 
     console.log(`💬 Chat message from ${userId}: "${message}"`);
+
+    // Set Tableau authentication if available in session
+    if (req.session?.tableauAuth?.token) {
+      console.log('🔐 Setting Tableau authentication for workflow');
+      tableauService.setAuth(
+        req.session.tableauAuth.token,
+        req.session.tableauAuth.siteId
+      );
+    }
 
     // Get Socket.IO instance from app
     const io = req.app.get('io');
@@ -49,33 +69,41 @@ router.post('/message', requireAuth, async (req: Request, res: Response) => {
       }
     );
 
-    // Store chat history in Elasticsearch
-    await esClient.index({
-      index: INDICES.CHAT_HISTORY,
-      document: {
-        sessionId: actualSessionId,
-        userId,
-        role: 'user',
-        content: message,
-        timestamp: new Date(),
-      },
-    });
+    // Store chat history in ChromaDB (optional)
+    if (process.env.CHROMA_ENABLED === 'true') {
+      try {
+        const userMessageId = `msg-${actualSessionId}-${Date.now()}-user`;
+        const assistantMessageId = `msg-${actualSessionId}-${Date.now()}-assistant`;
 
-    await esClient.index({
-      index: INDICES.CHAT_HISTORY,
-      document: {
-        sessionId: actualSessionId,
-        userId,
-        role: 'assistant',
-        content: result.summary || 'No response generated',
-        metadata: {
-          intent: result.intent,
-          datasetsUsed: result.relevantDatasets?.map(d => d.id) || [],
-          insights: result.insights || [],
-        },
-        timestamp: new Date(),
-      },
-    });
+        await addDocuments(
+          COLLECTIONS.CHAT_HISTORY,
+          [userMessageId, assistantMessageId],
+          [[0], [0]], // Dummy embeddings for chat history
+          [
+            {
+              sessionId: actualSessionId,
+              userId,
+              role: 'user',
+              content: message,
+              timestamp: new Date().toISOString(),
+            },
+            {
+              sessionId: actualSessionId,
+              userId,
+              role: 'assistant',
+              content: result.summary || 'No response generated',
+              intent: result.intent,
+              datasetsUsed: result.relevantDatasets?.map(d => d.id) || [],
+              insights: result.insights || [],
+              timestamp: new Date().toISOString(),
+            },
+          ],
+          [message, result.summary || 'No response generated']
+        );
+      } catch (error) {
+        console.log('ℹ️  Skipping chat history storage (ChromaDB optional)');
+      }
+    }
 
     // Send final response
     const response = {
@@ -88,8 +116,16 @@ router.post('/message', requireAuth, async (req: Request, res: Response) => {
       })) || [],
       insights: result.insights || [],
       visualization: result.visualization,
+      tableauViews: result.tableauViews || [],
       sessionId: actualSessionId,
     };
+
+    console.log('📤 Sending response to frontend:');
+    console.log('   - Message length:', response.message.length);
+    console.log('   - Tableau views count:', response.tableauViews.length);
+    if (response.tableauViews.length > 0) {
+      console.log('   - Tableau views:', response.tableauViews.map((v: any) => v.name).join(', '));
+    }
 
     // Emit completion event
     if (io && socketId) {
@@ -114,28 +150,26 @@ router.get('/history/:sessionId', requireAuth, async (req: Request, res: Respons
     const { sessionId } = req.params;
     const userId = req.session!.user?.id || 'anonymous';
 
-    const result = await (esClient.search as any)({
-      index: INDICES.CHAT_HISTORY,
-      body: {
-        query: {
-          bool: {
-            must: [
-              { term: { sessionId } },
-              { term: { userId } },
-            ],
-          },
-        },
-        sort: [{ timestamp: 'asc' }],
-        size: 100,
+    const collection = getCollection(COLLECTIONS.CHAT_HISTORY);
+    const result = await collection.get({
+      where: {
+        $and: [
+          { sessionId: sessionId },
+          { userId: userId },
+        ],
       },
     });
 
-    const messages = result.hits.hits.map((hit: any) => ({
-      role: hit._source.role,
-      content: hit._source.content,
-      timestamp: hit._source.timestamp,
-      metadata: hit._source.metadata,
-    }));
+    const messages = (result.ids || []).map((id: string, index: number) => ({
+      role: result.metadatas?.[index]?.role,
+      content: result.metadatas?.[index]?.content,
+      timestamp: result.metadatas?.[index]?.timestamp,
+      metadata: {
+        intent: result.metadatas?.[index]?.intent,
+        datasetsUsed: result.metadatas?.[index]?.datasetsUsed,
+        insights: result.metadatas?.[index]?.insights,
+      },
+    })).sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
     res.json({ messages });
   } catch (error: any) {
@@ -154,37 +188,38 @@ router.get('/sessions', requireAuth, async (req: Request, res: Response) => {
   try {
     const userId = req.session!.user?.id || 'anonymous';
 
-    const result = await (esClient.search as any)({
-      index: INDICES.CHAT_HISTORY,
-      body: {
-        query: {
-          term: { userId },
-        },
-        aggs: {
-          sessions: {
-            terms: {
-              field: 'sessionId',
-              size: 50,
-            },
-            aggs: {
-              latest_message: {
-                top_hits: {
-                  size: 1,
-                  sort: [{ timestamp: 'desc' }],
-                },
-              },
-            },
-          },
-        },
-        size: 0,
-      },
+    const collection = getCollection(COLLECTIONS.CHAT_HISTORY);
+    const result = await collection.get({
+      where: { userId },
     });
 
-    const sessions = result.aggregations?.sessions?.buckets?.map((bucket: any) => ({
-      sessionId: bucket.key,
-      messageCount: bucket.doc_count,
-      lastMessage: bucket.latest_message.hits.hits[0]?._source,
-    })) || [];
+    // Group messages by sessionId
+    const sessionMap = new Map<string, any>();
+
+    (result.ids || []).forEach((id: string, index: number) => {
+      const metadata = result.metadatas?.[index];
+      if (metadata) {
+        const sessionId = metadata.sessionId;
+        if (!sessionMap.has(sessionId)) {
+          sessionMap.set(sessionId, {
+            sessionId,
+            messageCount: 0,
+            lastMessage: null,
+            lastTimestamp: '',
+          });
+        }
+        const session = sessionMap.get(sessionId);
+        session.messageCount++;
+        if (!session.lastTimestamp || metadata.timestamp > session.lastTimestamp) {
+          session.lastTimestamp = metadata.timestamp;
+          session.lastMessage = metadata;
+        }
+      }
+    });
+
+    const sessions = Array.from(sessionMap.values()).sort((a, b) =>
+      new Date(b.lastTimestamp).getTime() - new Date(a.lastTimestamp).getTime()
+    );
 
     res.json({ sessions });
   } catch (error: any) {

@@ -9,10 +9,13 @@ import driveRoutes from "./routes/drive.js";
 import ingestRoutes from "./routes/ingest.js";
 import chatRoutes from "./routes/chat.js";
 import explorerRoutes from "./routes/explorer.js";
-import workflowRoutes from "./routes/workflows.js";
+// import workflowRoutes from "./routes/workflows.js"; // Commented out - not needed for Tableau hackathon
 import insightsRoutes from "./routes/insights.js";
-import { initializeElasticsearch } from "./config/elasticsearch.js";
-import { workflowScheduler } from "./services/workflowScheduler.js";
+import tableauRoutes from "./routes/tableau.js";
+import uploadRoutes from "./routes/upload.js";
+import { initializeChromaDB } from "./config/chromadb.js";
+import { validateTableauConfig } from "./config/tableau.js";
+// import { workflowScheduler } from "./services/workflowScheduler.js"; // Commented out - not needed for Tableau hackathon
 
 dotenv.config();
 
@@ -80,14 +83,17 @@ app.use(
 // Routes
 app.get("/", (req, res) => {
   res.json({
-    message: "Analytics Copilot API",
-    version: "1.0.0",
+    message: "Tableau AI Copilot API",
+    version: "2.0.0",
     endpoints: {
       auth: "/api/auth",
       drive: "/api/drive",
       ingest: "/api/ingest",
       chat: "/api/chat",
       explorer: "/api/explorer",
+      tableau: "/api/tableau",
+      insights: "/api/insights",
+      upload: "/api/upload",
     },
   });
 });
@@ -97,8 +103,10 @@ app.use("/api/drive", driveRoutes);
 app.use("/api/ingest", ingestRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/explorer", explorerRoutes);
-app.use("/api/workflows", workflowRoutes);
+// app.use("/api/workflows", workflowRoutes); // Commented out - not needed for Tableau hackathon
 app.use("/api/insights", insightsRoutes);
+app.use("/api/tableau", tableauRoutes);
+app.use("/api/upload", uploadRoutes);
 
 // WebSocket connection handling
 io.on("connection", (socket) => {
@@ -121,22 +129,33 @@ app.set("io", io);
 // Initialize and start server
 async function startServer() {
   try {
-    // Initialize Elasticsearch
-    console.log("🔧 Initializing Elasticsearch...");
-    await initializeElasticsearch();
+    // Initialize ChromaDB
+    console.log("🔧 Initializing ChromaDB...");
+    await initializeChromaDB();
 
-    // Initialize Workflow Scheduler
-    console.log("🔧 Initializing workflow scheduler...");
-    await workflowScheduler.initialize();
+    // Validate Tableau configuration
+    console.log("🔧 Validating Tableau configuration...");
+    const tableauValidation = validateTableauConfig();
+    if (tableauValidation.valid) {
+      console.log("✅ Tableau configuration valid");
+    } else {
+      console.log("⚠️  Tableau configuration incomplete:");
+      tableauValidation.missing.forEach(m => console.log(`   - Missing: ${m}`));
+      console.log("   💡 Add Tableau credentials to .env to enable Tableau integration");
+    }
+
+    // Initialize Workflow Scheduler (commented out for Tableau hackathon)
+    // console.log("🔧 Initializing workflow scheduler...");
+    // await workflowScheduler.initialize();
 
     // Start server
     httpServer.listen(PORT, () => {
       console.log(`✅ Server running on port ${PORT}`);
       console.log(`📡 WebSocket server ready`);
       console.log(`🌐 Frontend allowlist: ${ALLOWED_ORIGINS.join(", ")}`);
-      console.log(
-        `⏰ Workflow scheduler: ${workflowScheduler.getScheduledCount()} workflows scheduled`
-      );
+      // console.log(
+      //   `⏰ Workflow scheduler: ${workflowScheduler.getScheduledCount()} workflows scheduled`
+      // );
     });
   } catch (error) {
     console.error("❌ Failed to start server:", error);

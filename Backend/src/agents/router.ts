@@ -121,6 +121,14 @@ Analyze this query and provide structured output.`;
       (lowerQuery.includes('can you') && !lowerQuery.includes('data')) ||
       complexity === 'simple' && relevantDatasets.length === 0 && !requiresDataRetrieval;
 
+    // Check if this is a Tableau query
+    const tableauKeywords = [
+      'dashboard', 'visualization', 'viz', 'tableau', 'chart',
+      'graph', 'report', 'workbook', 'view', 'show me', 'display',
+      'visualize', 'plot'
+    ];
+    const isTableauQuery = tableauKeywords.some(keyword => lowerQuery.includes(keyword));
+
     // Determine next agent
     let nextAgent = 'retriever';
 
@@ -129,6 +137,10 @@ Analyze this query and provide structured output.`;
       nextAgent = 'conversational_brain';
       requiresDataRetrieval = false;
       console.log('   🧠 Detected conversational query - using LLM brain directly');
+    } else if (isTableauQuery) {
+      // Route to Tableau agent for visualization discovery
+      nextAgent = 'tableau';
+      console.log('   🎨 Detected Tableau query - routing to Tableau Discovery Agent');
     } else if (relevantDatasets.length === 0) {
       nextAgent = 'retriever'; // Need to find datasets first
     } else if (requiresWebSearch) {

@@ -1,0 +1,72 @@
+import jwt from 'jsonwebtoken';
+import axios from 'axios';
+import { tableauConfig } from '../config/tableau.js';
+
+/**
+ * Tableau JWT (Direct Trust) Authentication
+ *
+ * Direct Trust uses JWT tokens instead of OAuth or PAT
+ */
+
+interface JWTAuthConfig {
+  clientId: string;
+  secretId: string;
+  secretValue: string;
+  username: string;
+  scopes: string[];
+}
+
+/**
+ * Generate JWT token for Tableau Direct Trust
+ */
+export function generateTableauJWT(config: JWTAuthConfig): string {
+  const now = Math.floor(Date.now() / 1000);
+
+  const payload = {
+    iss: config.clientId,
+    sub: config.username,
+    aud: 'tableau',
+    exp: now + 300, // 5 minutes
+    jti: generateJTI(),
+    scp: config.scopes,
+  };
+
+  // Sign with the secret value
+  const token = jwt.sign(payload, config.secretValue, {
+    algorithm: 'HS256',
+    header: {
+      kid: config.secretId,
+      iss: config.clientId,
+    },
+  });
+
+  return token;
+}
+
+/**
+ * Generate unique JTI (JWT ID)
+ */
+function generateJTI(): string {
+  return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
+}
+
+/**
+ * Authenticate with Tableau using JWT
+ */
+export async function authenticateWithJWT(
+  username: string
+): Promise<{ token: string; siteId: string; userId: string }> {
+  try {
+    // This is for Direct Trust - not yet fully implemented
+    // Need: Client ID, Secret ID, Secret Value, and Username
+
+    throw new Error(
+      'Direct Trust (JWT) authentication requires additional setup. ' +
+      'Please use PAT or OAuth 2.0 instead for the hackathon.'
+    );
+
+  } catch (error: any) {
+    console.error('JWT authentication failed:', error);
+    throw error;
+  }
+}

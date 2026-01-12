@@ -65,11 +65,14 @@ Provide a clear, structured analysis plan.`;
     console.log(`   Plan summary: ${analysisPlan.substring(0, 100)}...`);
 
     // Determine next step based on intent
+    // For uploaded Tableau CSVs, we have all data in memory, so route to visualizer
     let nextAgent = 'summarizer';
     if (intent === 'visualization') {
       nextAgent = 'visualizer';
     } else if (intent === 'query' || intent === 'analysis' || intent === 'comparison') {
-      nextAgent = 'query_generator';
+      // Route to visualizer instead of query_generator (which is disabled)
+      // For uploaded CSVs, we have all the data already
+      nextAgent = 'visualizer';
     }
 
     return {
